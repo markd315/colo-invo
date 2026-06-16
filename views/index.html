@@ -302,6 +302,32 @@
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
+        
+        .scraped-value-tile {
+            background: var(--bg-tertiary, #1f2638);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 6px;
+            padding: 10px 5px;
+            text-align: center;
+            min-width: 90px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .scraped-value-tile:hover {
+            transform: translateY(-2px);
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .status-pulse {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
     </style>
 </head>
 
@@ -466,6 +492,20 @@
                 </div>
             </div>
         </div>
+
+        <!-- OSRS Wiki Live Wave Rewards -->
+        <div class="card fullwidth" style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin-bottom: 0;">OSRS Wiki Live Wave Rewards</h2>
+                <div id="scrapeStatus" style="font-size: 12px; color: var(--text-secondary, #999); display: flex; align-items: center; gap: 6px;">
+                    <span id="scrapeStatusIndicator" class="status-indicator status-pulse" style="width: 8px; height: 8px; border-radius: 50%; background-color: #ffc107; display: inline-block;"></span>
+                    <span id="scrapeStatusText">Loading live values...</span>
+                </div>
+            </div>
+            <div id="scrapedGEValues" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; overflow-x: auto; padding: 5px 0;">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
@@ -546,7 +586,8 @@
             purple: {},
             chart: null,
             renderOrder: [],
-            w12Overrides: getDefaultW12Overrides()
+            w12Overrides: getDefaultW12Overrides(),
+            waveRewards: [29280, 45472.43, 53226.66, 79739.6, 152267.59, 156533.64, 211858.1, 230164.52, 388921.39, 478855.2, 713654.63, 1255154.42]
         };
 
         // Initialize modifier classification
@@ -1038,7 +1079,7 @@
             }
 
             self.onmessage = function(e) {
-                const { modifiers, classification, purpleIndices, poolMult, simRuns, reentryGreenW11, w12Overrides, deathGreen, deathYellow1, deathYellow2, deathFee, supplyCost } = e.data;
+                const { modifiers, classification, purpleIndices, poolMult, simRuns, reentryGreenW11, w12Overrides, deathGreen, deathYellow1, deathYellow2, deathFee, supplyCost, waveRewards } = e.data;
 
                 const blasphemy1 = modifiers.find(m => m.name === "Blasphemy I");
                 const relentless1 = modifiers.find(m => m.name === "Relentless I");
@@ -1051,11 +1092,11 @@
                 const random = Math.random;
 
                 // Profit precomputations
-                const waveRewards = [29280, 45472.43, 53226.66, 79739.6, 152267.59, 156533.64, 211858.1, 230164.52, 388921.39, 478855.2, 713654.63, 1255154.42];
+                const actualRewards = waveRewards || [29280, 45472.43, 53226.66, 79739.6, 152267.59, 156533.64, 211858.1, 230164.52, 388921.39, 478855.2, 713654.63, 1255154.42];
                 const cumulativeRewards = [0];
                 let rewardSum = 0;
                 for (let i = 0; i < 12; i++) {
-                    rewardSum += waveRewards[i];
+                    rewardSum += actualRewards[i];
                     cumulativeRewards.push(rewardSum);
                 }
 
@@ -1473,7 +1514,8 @@
                     deathYellow1,
                     deathYellow2,
                     deathFee,
-                    supplyCost
+                    supplyCost,
+                    waveRewards: state.waveRewards
                 });
             }
         }
@@ -1635,10 +1677,163 @@
         document.getElementById('cofferDiscount').addEventListener('input', updateCalculations);
         document.getElementById('supplyCost').addEventListener('input', updateCalculations);
 
+        function updateScrapedUI(values, source) {
+            const container = document.getElementById('scrapedGEValues');
+            if (!container) return;
+
+            container.innerHTML = '';
+            values.forEach((val, i) => {
+                const tile = document.createElement('div');
+                tile.className = 'scraped-value-tile';
+                tile.title = `Exact Value: ${val.toLocaleString()} gp`;
+                
+                // Formatted string: e.g. 29.3k gp or 1.26M gp
+                let formattedVal = "";
+                if (val >= 1000000) {
+                    formattedVal = (val / 1000000).toFixed(2) + 'M';
+                } else if (val >= 1000) {
+                    formattedVal = (val / 1000).toFixed(1) + 'k';
+                } else {
+                    formattedVal = val.toString();
+                }
+
+                tile.innerHTML = `
+                    <div style="font-size: 11px; color: var(--text-secondary, #999); text-transform: uppercase; margin-bottom: 4px; font-weight: 600;">Wave ${i + 1}</div>
+                    <div style="font-size: 13px; font-weight: bold; color: #4caf50;">${formattedVal}</div>
+                `;
+                container.appendChild(tile);
+            });
+
+            // Update status message
+            const statusIndicator = document.getElementById('scrapeStatusIndicator');
+            const statusText = document.getElementById('scrapeStatusText');
+            if (statusIndicator && statusText) {
+                statusIndicator.classList.remove('status-pulse');
+                if (source === 'scraped') {
+                    statusIndicator.style.backgroundColor = '#4caf50';
+                    statusText.textContent = 'Live (scraped)';
+                } else {
+                    statusIndicator.style.backgroundColor = '#f44336';
+                    statusText.textContent = 'Offline (defaults)';
+                }
+            }
+        }
+
+        async function fetchWikiRewards() {
+            const targetUrl = 'https://oldschool.runescape.wiki/w/Rewards_Chest_(Fortis_Colosseum)';
+            let htmlText = '';
+            let success = false;
+
+            // 1. Try api.allorigins.win
+            try {
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.contents) {
+                        htmlText = data.contents;
+                        success = true;
+                    }
+                }
+            } catch (e) {
+                console.warn('api.allorigins.win failed:', e);
+            }
+
+            // 2. Try corsproxy.io as fallback
+            if (!success) {
+                try {
+                    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+                    if (res.ok) {
+                        htmlText = await res.text();
+                        success = true;
+                    }
+                } catch (e) {
+                    console.warn('corsproxy.io fallback failed:', e);
+                }
+            }
+
+            if (success && htmlText) {
+                try {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    const parsedRewards = [];
+
+                    for (let w = 1; w <= 12; w++) {
+                        let val = null;
+
+                        // Fallback 1: Absolute XPath
+                        try {
+                            const xpathExpr = `/html/body/div[3]/div[3]/div[5]/div[1]/p[${w + 12}]/span`;
+                            const result = doc.evaluate(xpathExpr, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                            const node = result.singleNodeValue;
+                            if (node) {
+                                const parsedVal = parseFloat(node.textContent.trim().replace(/,/g, ''));
+                                if (!isNaN(parsedVal)) {
+                                    val = parsedVal;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn(`Absolute XPath failed for Wave ${w}:`, e);
+                        }
+
+                        // Fallback 2: Relative XPath
+                        if (val === null) {
+                            try {
+                                const xpathFallback = `//p[contains(translate(normalize-space(.), ' ', ''), 'averagewave${w}rewardisworth')]//span`;
+                                const result = doc.evaluate(xpathFallback, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                                const node = result.singleNodeValue;
+                                if (node) {
+                                    const parsedVal = parseFloat(node.textContent.trim().replace(/,/g, ''));
+                                    if (!isNaN(parsedVal)) {
+                                        val = parsedVal;
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn(`Relative XPath fallback failed for Wave ${w}:`, e);
+                            }
+                        }
+
+                        // Fallback 3: Regex Search
+                        if (val === null) {
+                            const pattern = new RegExp(`wave\\s+${w}\\s+reward\\s+is\\s+worth\\s+<span[^>]*>([\\d,.]+)`, 'i');
+                            const match = htmlText.match(pattern);
+                            if (match) {
+                                const parsedVal = parseFloat(match[1].replace(/,/g, ''));
+                                if (!isNaN(parsedVal)) {
+                                    val = parsedVal;
+                                }
+                            }
+                        }
+
+                        if (val !== null) {
+                            parsedRewards.push(val);
+                        } else {
+                            // Fallback to hardcoded default
+                            parsedRewards.push(state.waveRewards[w - 1]);
+                        }
+                    }
+
+                    if (parsedRewards.length === 12) {
+                        state.waveRewards = parsedRewards;
+                        updateScrapedUI(state.waveRewards, 'scraped');
+                        updateCalculations();
+                        return;
+                    }
+                } catch (parseError) {
+                    console.error('Failed to parse scraped OSRS Wiki HTML:', parseError);
+                }
+            }
+
+            // Fallback UI rendering
+            updateScrapedUI(state.waveRewards, 'defaults');
+            updateCalculations();
+        }
+
         // Initialize
         initModifiers();
         renderModifiers();
+        updateScrapedUI(state.waveRewards, 'defaults');
         updateCalculations();
+        fetchWikiRewards();
 
         // Profit UI updating and quartile calculation
         function updateProfitUI(profitStatsList, totalSimRuns, waves) {
