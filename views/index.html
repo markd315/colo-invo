@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortis Colosseum Invocation Calculator</title>
+    <link rel="stylesheet" href="/css/auth-theme.css">
+    <link rel="stylesheet" href="/css/shared.css">
+    <script src="/js/auth/firebase-config.js"></script>
+    <script src="/api-config.js"></script>
+    <script src="/js/auth/firebase-auth.js"></script>
+    <script src="/js/core/auth-manager.js"></script>
+    <script src="/js/auth/pages-authentication.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary, #0a0e27);
+            color: var(--text-primary, #e0e0e0);
+            padding: 20px;
+        }
+        
+        .container-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .container-main {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--bg-secondary, #1a1f3a);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 8px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .card h2 {
+            margin-bottom: 15px;
+            color: var(--text-primary, #e0e0e0);
+            font-size: 18px;
+        }
+        
+        .controls-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .form-control {
+            flex: 1;
+            min-width: 100px;
+            padding: 8px 12px;
+            background: var(--input-bg, #252d47);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 4px;
+            color: var(--text-primary, #e0e0e0);
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            background: var(--btn-bg, #2d5016);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: var(--btn-hover, #3d6b1f);
+        }
+        
+        .btn-primary {
+            background: var(--color-fire-red, #d32f2f);
+        }
+        
+        .btn-primary:hover {
+            background: #b71c1c;
+        }
+        
+        .modifier-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .modifier-tile {
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            min-height: 140px;
+            background: var(--bg-tertiary, #1f2638);
+        }
+        
+        .modifier-tile img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .modifier-tile-label {
+            font-size: 12px;
+            font-weight: 600;
+            word-break: break-word;
+        }
+        
+        .modifier-tile.green {
+            background: rgba(76, 175, 80, 0.15);
+            border-color: #4caf50;
+        }
+        
+        .modifier-tile.green:hover {
+            background: rgba(76, 175, 80, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .modifier-tile.yellow {
+            background: rgba(255, 193, 7, 0.15);
+            border-color: #ffc107;
+        }
+        
+        .modifier-tile.yellow:hover {
+            background: rgba(255, 193, 7, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .modifier-tile.red {
+            background: rgba(244, 67, 54, 0.15);
+            border-color: #f44336;
+        }
+        
+        .modifier-tile.red:hover {
+            background: rgba(244, 67, 54, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .modifier-tile.unselected {
+            background: var(--bg-tertiary, #1f2638);
+            border-color: var(--border-color, #333);
+        }
+        
+        .modifier-tile.unselected:hover {
+            background: var(--bg-secondary, #252d47);
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: var(--bg-tertiary, #1f2638);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 3px solid var(--border-color, #333);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-fire-red, #d32f2f);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary, #999);
+            text-transform: uppercase;
+        }
+        
+        .wave-info {
+            font-size: 13px;
+            color: var(--text-secondary, #999);
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        
+        .fullwidth {
+            grid-column: 1 / -1;
+        }
+        
+        @media (max-width: 767px) {
+            .container-main {
+                grid-template-columns: 1fr;
+            }
+            
+            .modifier-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-main">
+        <!-- Left Panel: Modifier Selection -->
+        <div class="card">
+            <h2>Modifier Classification</h2>
+            <div class="controls-section">
+                <label style="font-size: 13px;">Pool Multiplier:</label>
+                <input type="number" id="poolMultiplier" class="form-control" value="3" min="1" max="10" style="max-width: 80px;">
+            </div>
+            <div class="controls-section">
+                <button class="btn btn-primary" id="resetBtn">Reset All</button>
+            </div>
+            
+            <h3 style="font-size: 14px; margin-top: 15px; margin-bottom: 10px;">Click to classify modifiers:</h3>
+            <div class="modifier-grid" id="modifierGrid"></div>
+        </div>
+        
+        <!-- Right Panel: Chart & Stats -->
+        <div>
+            <div class="card">
+                <h2>Risk Assessment Graph</h2>
+                <div class="chart-container">
+                    <canvas id="riskChart"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffc107;"></div>
+                        <span>Yellow Risk %</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f44336;"></div>
+                        <span>Red Risk %</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 20px;">
+                <h2>Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="greenCount">0</div>
+                        <div class="stat-label">Green</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="yellowCount">0</div>
+                        <div class="stat-label">Yellow</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="redCount">0</div>
+                        <div class="stat-label">Red</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="waveReset">-</div>
+                        <div class="stat-label">Est. Reset Wave</div>
+                    </div>
+                </div>
+                <div class="wave-info" id="waveInfo">Select modifiers to calculate risk</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script>
+        // Modifier definitions (34 total)
+        const modifiers = [
+            { name: "Blasphemy I", wave1: true, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Blasphemy II", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Relentless I", wave1: true, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Relentless II", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Frailty I", wave1: true, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Frailty II", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Red Flag", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Dynamic Duo", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Deathly Blessing", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Energy Drain", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Volatile Power", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Parasite", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Weakening Curse", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Power Spike", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Malediction", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Hunger", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Executioner", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Decaying", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Piercing Strike", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Mystic Enhancement", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Soulsplit Siphon", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Bleed", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Close Call", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Final Stand", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Double Trouble", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Hardcore", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Lightning Rod", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Invisible Foes", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Strengthened Attacks", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Famine", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Exhaustion", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Chaos", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Ancient Power", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
+            { name: "Twilight", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" }
+        ];
+
+        // State management
+        const state = {
+            classification: {},
+            chart: null
+        };
+
+        // Initialize modifier classification
+        function initModifiers() {
+            modifiers.forEach((mod, idx) => {
+                state.classification[idx] = 'unselected';
+            });
+        }
+
+        // Render modifier grid
+        function renderModifiers() {
+            const grid = document.getElementById('modifierGrid');
+            grid.innerHTML = '';
+
+            modifiers.forEach((mod, idx) => {
+                const tile = document.createElement('div');
+                tile.className = `modifier-tile ${state.classification[idx]}`;
+                tile.innerHTML = `
+                    <img src="${mod.img}" alt="${mod.name}">
+                    <div class="modifier-tile-label">${mod.name}</div>
+                `;
+                
+                tile.addEventListener('click', () => {
+                    const currentClass = state.classification[idx];
+                    if (currentClass === 'unselected') {
+                        state.classification[idx] = 'green';
+                    } else if (currentClass === 'green') {
+                        state.classification[idx] = 'yellow';
+                    } else if (currentClass === 'yellow') {
+                        state.classification[idx] = 'red';
+                    } else {
+                        state.classification[idx] = 'unselected';
+                    }
+                    renderModifiers();
+                    updateCalculations();
+                });
+
+                grid.appendChild(tile);
+            });
+        }
+
+        // Calculate risk for each wave
+        function calculateRisks() {
+            const poolMult = parseInt(document.getElementById('poolMultiplier').value) || 3;
+            
+            // Count classifications
+            let greenCount = Object.values(state.classification).filter(c => c === 'green').length;
+            let yellowCount = Object.values(state.classification).filter(c => c === 'yellow').length;
+            let redCount = Object.values(state.classification).filter(c => c === 'red').length;
+
+            document.getElementById('greenCount').textContent = greenCount;
+            document.getElementById('yellowCount').textContent = yellowCount;
+            document.getElementById('redCount').textContent = redCount;
+
+            // Wave-by-wave simulation
+            const waves = [
+                { num: 1, yellowRisk: 0, redRisk: 0 },
+                { num: 2, yellowRisk: 0, redRisk: 0 },
+                { num: 3, yellowRisk: 0, redRisk: 0 },
+                { num: 4, yellowRisk: 0, redRisk: 0 },
+                { num: 5, yellowRisk: 0, redRisk: 0 },
+                { num: 6, yellowRisk: 0, redRisk: 0 },
+                { num: 7, yellowRisk: 0, redRisk: 0 },
+                { num: 8, yellowRisk: 0, redRisk: 0 },
+                { num: 9, yellowRisk: 0, redRisk: 0 },
+                { num: 10, yellowRisk: 0, redRisk: 0 },
+                { num: 11, yellowRisk: 0, redRisk: 0 }
+            ];
+
+            // Simplified risk calculation
+            // Risk increases based on the ratio of bad modifiers to good ones
+            const totalModifiers = greenCount + yellowCount + redCount;
+            
+            if (totalModifiers === 0) {
+                document.getElementById('waveInfo').textContent = "Select modifiers to calculate risk";
+                return waves;
+            }
+
+            const yellowRatio = yellowCount / totalModifiers;
+            const redRatio = redCount / totalModifiers;
+
+            // Risk compounds over waves
+            let cumulativeYellow = 0;
+            let cumulativeRed = 0;
+
+            for (let w = 0; w < waves.length; w++) {
+                // Wave 7+ includes Red Flag and Dynamic Duo (additional red modifiers)
+                const waveMultiplier = w >= 6 ? 1.15 : 1;
+                
+                // Calculate incremental risk per wave
+                const waveYellowRisk = Math.min(100, yellowRatio * 100 * (w + 1) * 0.8 * waveMultiplier);
+                const waveRedRisk = Math.min(100, redRatio * 100 * (w + 1) * 1.2 * waveMultiplier);
+
+                waves[w].yellowRisk = Math.round(Math.min(waveYellowRisk, 100));
+                waves[w].redRisk = Math.round(Math.min(waveRedRisk, 100));
+            }
+
+            // Determine estimated reset wave
+            const resetWave = waves.findIndex(w => w.redRisk > 60);
+            if (resetWave >= 0) {
+                document.getElementById('waveReset').textContent = resetWave + 1;
+            } else {
+                document.getElementById('waveReset').textContent = "Safe";
+            }
+
+            return waves;
+        }
+
+        // Update chart
+        function updateChart() {
+            const waves = calculateRisks();
+            const waveLabels = waves.map(w => `Wave ${w.num}`);
+            const yellowData = waves.map(w => w.yellowRisk);
+            const redData = waves.map(w => w.redRisk);
+
+            const ctx = document.getElementById('riskChart').getContext('2d');
+
+            if (state.chart) {
+                state.chart.data.labels = waveLabels;
+                state.chart.data.datasets[0].data = yellowData;
+                state.chart.data.datasets[1].data = redData;
+                state.chart.update();
+            } else {
+                state.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: waveLabels,
+                        datasets: [
+                            {
+                                label: 'Yellow Risk %',
+                                data: yellowData,
+                                borderColor: '#ffc107',
+                                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3,
+                                pointBackgroundColor: '#ffc107',
+                                pointRadius: 4
+                            },
+                            {
+                                label: 'Red Risk %',
+                                data: redData,
+                                borderColor: '#f44336',
+                                backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3,
+                                pointBackgroundColor: '#f44336',
+                                pointRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    },
+                                    color: '#999'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#999'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.05)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Update all calculations
+        function updateCalculations() {
+            updateChart();
+        }
+
+        // Reset all
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            initModifiers();
+            renderModifiers();
+            updateCalculations();
+        });
+
+        // Pool multiplier change
+        document.getElementById('poolMultiplier').addEventListener('change', updateCalculations);
+
+        // Initialize
+        initModifiers();
+        renderModifiers();
+        updateCalculations();
+    </script>
+</body>
+</html>

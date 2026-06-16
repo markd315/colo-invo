@@ -1,0 +1,19 @@
+Persistence Usage:
+from persistence_utils import Persistence
+
+# Initialize
+persistence = Persistence(event)
+
+# Read
+list_data = persistence.get_list("schema_name", query_params={"page": 1})
+items = persistence.get_items(list_data)
+item = persistence.get_item("schema_name", "item_id")
+
+# Write
+persistence.save_post("schema_name", payload)
+persistence.save_put("schema_name", "item_id", payload)
+persistence.save_patch("schema_name", "item_id", payload) # Partial update
+persistence.delete("schema_name", "item_id")
+
+# Utilities
+secret_value = persistence.get_secret("SECRET_NAME")
