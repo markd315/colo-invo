@@ -112,6 +112,7 @@
             cursor: pointer;
             border-radius: 8px;
             padding: 8px;
+            padding-bottom: 25px;
             text-align: center;
             transition: all 0.2s;
             border: 2px solid transparent;
@@ -119,8 +120,41 @@
             flex-direction: column;
             align-items: center;
             gap: 5px;
-            min-height: 140px;
+            min-height: 145px;
             background: var(--bg-tertiary, #1f2638);
+            position: relative;
+        }
+        
+        .w12-override-container {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .w12-override-label {
+            font-size: 10px;
+            color: var(--text-secondary, #999);
+            font-weight: bold;
+        }
+        
+        .w12-select {
+            font-size: 10px;
+            background: var(--input-bg, #252d47);
+            color: var(--text-primary, #e0e0e0);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 3px;
+            padding: 1px 3px;
+            cursor: pointer;
+            outline: none;
+            max-width: 75px;
+            font-weight: 500;
+        }
+        .w12-select:hover {
+            border-color: #555;
+            background: var(--bg-secondary, #1a1f3a);
         }
         
         .modifier-tile img {
@@ -163,6 +197,17 @@
         
         .modifier-tile.red:hover {
             background: rgba(244, 67, 54, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .modifier-tile.purple {
+            background: rgba(179, 136, 255, 0.15) !important;
+            border-color: #b388ff !important;
+            box-shadow: 0 0 8px rgba(179, 136, 255, 0.4);
+        }
+        
+        .modifier-tile.purple:hover {
+            background: rgba(179, 136, 255, 0.3) !important;
             transform: scale(1.05);
         }
         
@@ -264,14 +309,25 @@
         <div class="card">
             <h2>Modifier Classification</h2>
             <div class="controls-section">
-                <label style="font-size: 13px;">Pool Multiplier:</label>
-                <input type="number" id="poolMultiplier" class="form-control" value="3" min="1" max="10" style="max-width: 80px;">
+                <label style="font-size: 13px; cursor: help;" title="Active modifier upgrades get this weight multiplier in the draft pool. Jagex has not publicly released the exact mathematical boost value, so this parameter can be adjusted to test different potential weights (e.g., 3x or 5x).">Pool Multiplier (?):</label>
+                <input type="number" id="poolMultiplier" class="form-control" value="3" min="1" max="10" style="max-width: 80px;" title="Active modifier upgrades get this weight multiplier in the draft pool. Jagex has not publicly released the exact mathematical boost value, so this parameter can be adjusted to test different potential weights (e.g., 3x or 5x).">
             </div>
+            <div class="controls-section" style="align-items: center; gap: 8px;">
+                <label style="font-size: 13px;">Sim Precision:</label>
+                <input type="range" id="simPrecision" min="1" max="2" value="1" style="max-width: 70px; cursor: pointer;">
+                <span id="precisionLabel" style="font-size: 12px; font-weight: 600; color: var(--text-secondary, #999);">Fast (5k)</span>
+            </div>
+            <div class="controls-section" style="align-items: center; gap: 8px;">
+                <input type="checkbox" id="reentryGreenW11" checked style="cursor: pointer;">
+                <label for="reentryGreenW11" style="font-size: 13px; cursor: pointer;" title="If checked, Reentry II is treated as a Green modifier on Wave 11 since it has no impact on Sol Heredit (Wave 12).">Reentry II green on wave 11</label>
+            </div>
+
             <div class="controls-section">
                 <button class="btn btn-primary" id="resetBtn">Reset All</button>
+                <button class="btn" id="sortBtn" style="background: var(--btn-bg, #2d5016);">Re-sort</button>
             </div>
             
-            <h3 style="font-size: 14px; margin-top: 15px; margin-bottom: 10px;">Click to classify modifiers:</h3>
+            <h3 style="font-size: 14px; margin-top: 15px; margin-bottom: 10px;">Click to classify. Right-click / Long-press to toggle Purple (Taken):</h3>
             <div class="modifier-grid" id="modifierGrid"></div>
         </div>
         
@@ -292,6 +348,11 @@
                         <span>Red Risk %</span>
                     </div>
                 </div>
+                <div style="font-size: 11px; color: var(--text-secondary, #999); margin-top: 15px; line-height: 1.5; text-align: center;">
+                    <em>Simulation Mode: Monte Carlo (<span id="simRunsDesc">5,000 runs</span>). Assumes dominant drafting strategy (prioritizing new Tier I modifiers with green upgrade paths, prioritizing Tier II upgrades over Tier III completions to maintain safe options, and avoiding unlocking red/yellow upgrades) evaluated through Wave 12 (Sol Heredit).<br>
+                    <strong>Yellow Risk (Difficult):</strong> Forced to pick Yellow/Red (all 3 options offered are Yellow or Red).<br>
+                    <strong>Red Risk (Insane/Reset):</strong> Forced to pick Red (all 3 options offered are Red).</em>
+                </div>
             </div>
             
             <div class="card" style="margin-top: 20px;">
@@ -310,11 +371,71 @@
                         <div class="stat-label">Red</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-value" id="waveReset">-</div>
-                        <div class="stat-label">Est. Reset Wave</div>
+                        <div class="stat-value" id="waveReset" style="font-size: 16px; white-space: nowrap;">-</div>
+                        <div class="stat-label">Risk through Wave 12</div>
                     </div>
                 </div>
                 <div class="wave-info" id="waveInfo">Select modifiers to calculate risk</div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel: Profit Calculator -->
+        <div class="card fullwidth" style="margin-top: 20px;">
+            <h2 style="margin-bottom: 10px;">Profit & Strategy Calculator</h2>
+            <div style="font-size: 12px; color: var(--text-secondary, #999); margin-bottom: 15px; line-height: 1.4;">
+                Simulates run profitability under different reset strategies. Resets occur voluntarily (to claim reward before facing risk) or when forced to draft a Red modifier (run failure).
+            </div>
+            
+            <div class="controls-section" style="gap: 15px; margin-bottom: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--text-secondary, #999);">Green Death %:</label>
+                    <input type="number" id="deathGreen" class="form-control" value="2" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--text-secondary, #999);">1 Yellow Death %:</label>
+                    <input type="number" id="deathYellow1" class="form-control" value="5" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--text-secondary, #999);">2+ Yellow Death %:</label>
+                    <input type="number" id="deathYellow2" class="form-control" value="15" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--text-secondary, #999);">Coffer Discount %:</label>
+                    <input type="number" id="cofferDiscount" class="form-control" value="50" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--text-secondary, #999);">Supply Cost/Wave:</label>
+                    <input type="number" id="supplyCost" class="form-control" value="15000" min="0" style="max-width: 110px; height: 32px; padding: 4px 8px;">
+                </div>
+            </div>
+
+            <!-- Profit Results Panel -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <!-- Table of strategies -->
+                <div style="background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333);">
+                    <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-primary, #e0e0e0);">Strategy Comparison</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color, #333); color: var(--text-secondary, #999);">
+                                <th style="padding: 6px 4px;">Strategy</th>
+                                <th style="padding: 6px 4px; text-align: right;">Avg Wave</th>
+                                <th style="padding: 6px 4px; text-align: right;">Profit/Wave</th>
+                                <th style="padding: 6px 4px; text-align: right;">Avg Total Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profitTableBody">
+                            <!-- filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Recommendation box -->
+                <div style="background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333); display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-primary, #e0e0e0);">Recommendation</h3>
+                    <div id="strategyRecommendation" style="font-size: 14px; font-weight: 500; line-height: 1.4;">
+                        <!-- filled dynamically -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -323,53 +444,90 @@
     <script>
         // Modifier definitions (34 total)
         const modifiers = [
-            { name: "Blasphemy I", wave1: true, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Blasphemy II", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Relentless I", wave1: true, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Relentless II", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Frailty I", wave1: true, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Frailty II", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Red Flag", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Dynamic Duo", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Deathly Blessing", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Energy Drain", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Volatile Power", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Parasite", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Weakening Curse", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Power Spike", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Malediction", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Hunger", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Executioner", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Decaying", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Piercing Strike", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Mystic Enhancement", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Soulsplit Siphon", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Bleed", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Close Call", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Final Stand", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Double Trouble", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Hardcore", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Lightning Rod", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Invisible Foes", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Strengthened Attacks", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Famine", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Exhaustion", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Chaos", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Ancient Power", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" },
-            { name: "Twilight", wave1: false, img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png" }
+            { name: "Bees I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-bees.png", defaultClass: "red", group: "Bees", tier: 1 },
+            { name: "Bees II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-beesii.png", defaultClass: "red", group: "Bees", tier: 2 },
+            { name: "Bees III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-beesiii.png", defaultClass: "red", group: "Bees", tier: 3 },
+            { name: "Blasphemy I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-blasphemy.png", defaultClass: "green", group: "Blasphemy", tier: 1 },
+            { name: "Blasphemy II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-blasphemyii.png", defaultClass: "green", group: "Blasphemy", tier: 2 },
+            { name: "Blasphemy III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-blasphemyiii.png", defaultClass: "green", group: "Blasphemy", tier: 3 },
+            { name: "Dynamic Duo", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-dynamicduo.png", defaultClass: "red", group: "Dynamic Duo", tier: 1 },
+            { name: "Frailty I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-frailty.png", defaultClass: "green", group: "Frailty", tier: 1 },
+            { name: "Frailty II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-frailtyii.png", defaultClass: "green", group: "Frailty", tier: 2 },
+            { name: "Frailty III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-frailtyiii.png", defaultClass: "red", group: "Frailty", tier: 3 },
+            { name: "Myopia I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-myopia.png", defaultClass: "green", group: "Myopia", tier: 1 },
+            { name: "Myopia II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-myopiaii.png", defaultClass: "green", group: "Myopia", tier: 2 },
+            { name: "Myopia III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-myopiaiii.png", defaultClass: "yellow", group: "Myopia", tier: 3 },
+            { name: "Quartet", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-quartet.png", defaultClass: "red", group: "Quartet", tier: 1 },
+            { name: "Red Flag", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-redflag.png", defaultClass: "red", group: "Red Flag", tier: 1 },
+            { name: "Reentry I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-reentry.png", defaultClass: "green", group: "Reentry", tier: 1 },
+            { name: "Reentry II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-reentryii.png", defaultClass: "red", group: "Reentry", tier: 2 },
+            { name: "Reentry III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-reentryiii.png", defaultClass: "red", group: "Reentry", tier: 3 },
+            { name: "Relentless I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-relentless.png", defaultClass: "green", group: "Relentless", tier: 1 },
+            { name: "Relentless II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-relentlessii.png", defaultClass: "yellow", group: "Relentless", tier: 2 },
+            { name: "Relentless III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-relentlessiii.png", defaultClass: "yellow", group: "Relentless", tier: 3 },
+            { name: "Solar Flare I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-solarflare.png", defaultClass: "yellow", group: "Solar Flare", tier: 1 },
+            { name: "Solar Flare II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-solarflareii.png", defaultClass: "yellow", group: "Solar Flare", tier: 2 },
+            { name: "Solar Flare III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-solarflareiii.png", defaultClass: "yellow", group: "Solar Flare", tier: 3 },
+            { name: "Manti-mayhem I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpion.png", defaultClass: "yellow", group: "Manti-mayhem", tier: 1 },
+            { name: "Manti-mayhem II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpionii.png", defaultClass: "yellow", group: "Manti-mayhem", tier: 2 },
+            { name: "Manti-mayhem III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-thedoomscorpioniii.png", defaultClass: "red", group: "Manti-mayhem", tier: 3 },
+            { name: "Totemic", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-totemic.png", defaultClass: "red", group: "Totemic", tier: 1 },
+            { name: "Volatility I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-volatility.png", defaultClass: "yellow", group: "Volatility", tier: 1 },
+            { name: "Volatility II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-volatilityii.png", defaultClass: "yellow", group: "Volatility", tier: 2 },
+            { name: "Volatility III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-volatilityiii.png", defaultClass: "yellow", group: "Volatility", tier: 3 },
+            { name: "Doom I", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/fortiscolosseum-doom.png", defaultClass: "green", group: "Doom", tier: 1 },
+            { name: "Doom II", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/zzzzz-1713140027fortiscolosseum-doomii.png", defaultClass: "yellow", group: "Doom", tier: 2 },
+            { name: "Doom III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/zzzzz-1713140027fortiscolosseum-doomiii-1.png", defaultClass: "red", group: "Doom", tier: 3 }
         ];
+
+        function getDefaultW12Overrides() {
+            const defaults = {};
+            modifiers.forEach((mod, idx) => {
+                if (mod.group === "Solar Flare") {
+                    defaults[idx] = "green";
+                } else if (mod.group === "Relentless") {
+                    defaults[idx] = "green";
+                } else if (mod.group === "Volatility") {
+                    defaults[idx] = "green";
+                } else if (mod.group === "Blasphemy") {
+                    defaults[idx] = "green";
+                } else if (mod.name === "Quartet") {
+                    defaults[idx] = "yellow";
+                } else if (mod.name === "Totemic") {
+                    defaults[idx] = "red";
+                } else if (mod.name === "Doom II") {
+                    defaults[idx] = "yellow";
+                } else if (mod.name === "Doom III") {
+                    defaults[idx] = "red";
+                } else if (mod.group === "Bees") {
+                    defaults[idx] = "red";
+                } else if (mod.name === "Frailty I") {
+                    defaults[idx] = "green";
+                } else if (mod.name === "Frailty II") {
+                    defaults[idx] = "yellow";
+                } else if (mod.name === "Frailty III") {
+                    defaults[idx] = "red";
+                }
+            });
+            return defaults;
+        }
 
         // State management
         const state = {
             classification: {},
-            chart: null
+            purple: {},
+            chart: null,
+            renderOrder: [],
+            w12Overrides: getDefaultW12Overrides()
         };
 
         // Initialize modifier classification
-        function initModifiers() {
+        function initModifiers(toDefault = true) {
             modifiers.forEach((mod, idx) => {
-                state.classification[idx] = 'unselected';
+                state.classification[idx] = toDefault ? (mod.defaultClass || 'unselected') : 'unselected';
+                state.purple[idx] = false;
             });
+            state.renderOrder = Array.from({ length: modifiers.length }, (_, i) => i);
         }
 
         // Render modifier grid
@@ -377,38 +535,825 @@
             const grid = document.getElementById('modifierGrid');
             grid.innerHTML = '';
 
-            modifiers.forEach((mod, idx) => {
+            state.renderOrder.forEach((idx) => {
+                const mod = modifiers[idx];
                 const tile = document.createElement('div');
-                tile.className = `modifier-tile ${state.classification[idx]}`;
+                const isPurple = state.purple[idx];
+                tile.className = `modifier-tile ${state.classification[idx]}${isPurple ? ' purple' : ''}`;
                 tile.innerHTML = `
                     <img src="${mod.img}" alt="${mod.name}">
                     <div class="modifier-tile-label">${mod.name}</div>
                 `;
                 
-                tile.addEventListener('click', () => {
+                let pressTimer;
+                let isLongPress = false;
+
+                tile.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    state.purple[idx] = !state.purple[idx];
+                    renderModifiers();
+                    updateCalculations();
+                });
+
+                const startPress = (e) => {
+                    isLongPress = false;
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        state.purple[idx] = !state.purple[idx];
+                        renderModifiers();
+                        updateCalculations();
+                    }, 600);
+                };
+
+                const cancelPress = () => {
+                    clearTimeout(pressTimer);
+                };
+
+                tile.addEventListener('touchstart', startPress, { passive: true });
+                tile.addEventListener('touchend', (e) => {
+                    cancelPress();
+                    if (isLongPress) {
+                        e.preventDefault();
+                    }
+                });
+                tile.addEventListener('touchmove', cancelPress, { passive: true });
+
+                tile.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) {
+                        startPress(e);
+                    }
+                });
+                tile.addEventListener('mouseup', cancelPress);
+                tile.addEventListener('mouseleave', cancelPress);
+
+                tile.addEventListener('click', (e) => {
+                    if (isLongPress) {
+                        isLongPress = false;
+                        return;
+                    }
                     const currentClass = state.classification[idx];
-                    if (currentClass === 'unselected') {
-                        state.classification[idx] = 'green';
-                    } else if (currentClass === 'green') {
+                    if (currentClass === 'green') {
                         state.classification[idx] = 'yellow';
                     } else if (currentClass === 'yellow') {
                         state.classification[idx] = 'red';
                     } else {
-                        state.classification[idx] = 'unselected';
+                        state.classification[idx] = 'green';
                     }
                     renderModifiers();
                     updateCalculations();
                 });
 
+                // If this modifier can be offered on Wave 12, add the override select
+                const isW12Eligible = mod.name !== "Red Flag" && mod.name !== "Dynamic Duo" &&
+                                      mod.group !== "Manti-mayhem" && mod.group !== "Myopia" &&
+                                      mod.group !== "Reentry";
+                
+                if (isW12Eligible) {
+                    const container = document.createElement('div');
+                    container.className = 'w12-override-container';
+                    
+                    const label = document.createElement('span');
+                    label.className = 'w12-override-label';
+                    label.textContent = 'W12:';
+                    container.appendChild(label);
+                    
+                    const select = document.createElement('select');
+                    select.className = 'w12-select';
+                    select.title = "Wave 12 (Sol Heredit) Override Classification";
+                    
+                    const optDefault = document.createElement('option');
+                    optDefault.value = 'default';
+                    optDefault.textContent = 'Default';
+                    optDefault.style.color = 'var(--text-secondary, #999)';
+                    select.appendChild(optDefault);
+                    
+                    const colors = { green: '#4caf50', yellow: '#ffc107', red: '#f44336' };
+                    ['green', 'yellow', 'red'].forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c;
+                        opt.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+                        opt.style.color = colors[c];
+                        select.appendChild(opt);
+                    });
+                    
+                    // Set current override value
+                    const val = state.w12Overrides[idx] || 'default';
+                    select.value = val;
+                    
+                    const updateSelectColor = () => {
+                        const v = select.value;
+                        if (v === 'default') {
+                            select.style.color = '';
+                        } else {
+                            select.style.color = colors[v];
+                        }
+                    };
+                    updateSelectColor();
+                    
+                    // Prevent propagation to the tile's click/touch/contextmenu handlers
+                    const stopBubble = (e) => e.stopPropagation();
+                    container.addEventListener('click', stopBubble);
+                    container.addEventListener('mousedown', stopBubble);
+                    container.addEventListener('touchstart', stopBubble, { passive: true });
+                    container.addEventListener('contextmenu', stopBubble);
+                    
+                    select.addEventListener('change', (e) => {
+                        const newVal = e.target.value;
+                        if (newVal === 'default') {
+                            delete state.w12Overrides[idx];
+                        } else {
+                            state.w12Overrides[idx] = newVal;
+                        }
+                        updateSelectColor();
+                        updateCalculations();
+                    });
+                    
+                    container.appendChild(select);
+                    tile.appendChild(container);
+                }
+
                 grid.appendChild(tile);
             });
         }
 
-        // Calculate risk for each wave
-        function calculateRisks() {
+        // Sort modifiers based on current classifications: green, yellow, red, unselected, then alphabetically
+        function sortModifiers() {
+            const classOrder = { 'green': 3, 'yellow': 2, 'red': 1, 'unselected': 0 };
+            state.renderOrder.sort((idxA, idxB) => {
+                const scoreA = classOrder[state.classification[idxA]];
+                const scoreB = classOrder[state.classification[idxB]];
+                if (scoreA !== scoreB) {
+                    return scoreB - scoreA;
+                }
+                return modifiers[idxA].name.localeCompare(modifiers[idxB].name);
+            });
+            renderModifiers();
+        }
+
+        // Draw count elements from weighted pool without replacement
+        function drawWeightedWithoutReplacement(pool, count) {
+            const drawn = [];
+            const poolCopy = [...pool];
+
+            for (let i = 0; i < count; i++) {
+                if (poolCopy.length === 0) break;
+
+                let totalWeight = 0;
+                for (let j = 0; j < poolCopy.length; j++) {
+                    totalWeight += poolCopy[j].weight;
+                }
+
+                if (totalWeight <= 0) {
+                    const idx = Math.floor(Math.random() * poolCopy.length);
+                    drawn.push(poolCopy[idx].mod);
+                    poolCopy.splice(idx, 1);
+                    continue;
+                }
+
+                let r = Math.random() * totalWeight;
+                let runningSum = 0;
+                let drawnIdx = -1;
+
+                for (let j = 0; j < poolCopy.length; j++) {
+                    runningSum += poolCopy[j].weight;
+                    if (r <= runningSum) {
+                        drawnIdx = j;
+                        break;
+                    }
+                }
+
+                if (drawnIdx === -1) {
+                    drawnIdx = poolCopy.length - 1;
+                }
+
+                drawn.push(poolCopy[drawnIdx].mod);
+                poolCopy.splice(drawnIdx, 1);
+            }
+
+            return drawn;
+        }
+
+        // Choose best modifier from choices array based on optimal strategy
+        function chooseBestModifier(choices, activeIndices, groupTiers) {
+            if (choices.length === 0) return -1;
+
+            let bestMod = null;
+            let bestScore = -1;
+
+            choices.forEach((mod) => {
+                if (!mod) return;
+
+                const classification = state.classification[mod.idx];
+
+                // Check classification of the next tier in this group
+                let nextTierClass = 'none';
+                modifiers.forEach((m) => {
+                    if (m.group === mod.group && m.tier === mod.tier + 1) {
+                        nextTierClass = state.classification[m.idx] || 'unselected';
+                    }
+                });
+
+                // Count contiguous future green upgrades starting from next tier (tier 2)
+                let futureGreens = 0;
+                if (mod.tier === 1) {
+                    let t2Green = false;
+                    let t3Green = false;
+                    modifiers.forEach((m) => {
+                        if (m.group === mod.group) {
+                            if (m.tier === 2 && state.classification[m.idx] === 'green') {
+                                t2Green = true;
+                            }
+                            if (m.tier === 3 && state.classification[m.idx] === 'green') {
+                                t3Green = true;
+                            }
+                        }
+                    });
+                    if (t2Green) {
+                        futureGreens = 1;
+                        if (t3Green) {
+                            futureGreens = 2;
+                        }
+                    }
+                }
+
+                // Check if there are any remaining upgrade tiers that are Green
+                let hasGreenUpgrade = false;
+                modifiers.forEach((m) => {
+                    if (m.group === mod.group && m.tier > mod.tier) {
+                        if (state.classification[m.idx] === 'green') {
+                            hasGreenUpgrade = true;
+                        }
+                    }
+                });
+
+                let score = 0;
+                if (classification === 'green') {
+                    // Green modifiers: Tier 1 with future greens (sorted by count) > Tier 2 > Tier 3 > Tier 1 with 0 future greens
+                    if (mod.tier === 1) {
+                        if (futureGreens === 2) score = 8.0;
+                        else if (futureGreens === 1) score = 5.5;
+                        else score = 5.0;
+                    } else if (mod.tier === 2) {
+                        score = 7.0;
+                    } else { // tier 3
+                        score = 6.0;
+                    }
+
+                    // Penalty for unlocking worse tiers
+                    if (nextTierClass === 'red') {
+                        score -= 1.5;
+                    } else if (nextTierClass === 'yellow') {
+                        score -= 0.5;
+                    }
+                } else if (classification === 'yellow') {
+                    // Yellow modifiers: Tier 3 gets 4.0, Tier 2 gets 3.5, Tier 1 gets 3.0
+                    if (mod.tier === 3) score = 4.0;
+                    else if (mod.tier === 2) score = 3.5;
+                    else score = 3.0;
+
+                    // Bonus if it unlocks a green upgrade path
+                    if (hasGreenUpgrade) {
+                        score += 1.0;
+                    }
+                    
+                    // Penalty for unlocking red
+                    if (nextTierClass === 'red') {
+                        score -= 1.5;
+                    }
+                } else {
+                    // Red modifiers: Tier 3 gets 2.0, Tier 2 gets 1.5, Tier 1 gets 1.0
+                    if (mod.tier === 3) score = 2.0;
+                    else if (mod.tier === 2) score = 1.5;
+                    else score = 1.0;
+
+                    // Bonus if it unlocks a green upgrade path
+                    if (hasGreenUpgrade) {
+                        score += 1.0;
+                    }
+                }
+
+                // Tie-breaker: prefer upgrades to previously picked modifiers
+                const isUpgrade = mod.tier > 1;
+                if (isUpgrade) {
+                    score += 0.1;
+                }
+
+                // Small random jitter to break remaining ties randomly
+                score += Math.random() * 0.0001;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMod = mod;
+                }
+            });
+
+            return bestMod ? bestMod.idx : -1;
+        }
+
+        // Worker code definition
+        const workerCode = `
+            function drawWeightedWithoutReplacement(pool, count, random) {
+                const drawn = [];
+                const poolCopy = [...pool];
+
+                for (let i = 0; i < count; i++) {
+                    if (poolCopy.length === 0) break;
+
+                    let totalWeight = 0;
+                    for (let j = 0; j < poolCopy.length; j++) {
+                        totalWeight += poolCopy[j].weight;
+                    }
+
+                    if (totalWeight <= 0) {
+                        const idx = Math.floor(random() * poolCopy.length);
+                        drawn.push(poolCopy[idx].mod);
+                        poolCopy.splice(idx, 1);
+                        continue;
+                    }
+
+                    let r = random() * totalWeight;
+                    let runningSum = 0;
+                    let drawnIdx = -1;
+
+                    for (let j = 0; j < poolCopy.length; j++) {
+                        runningSum += poolCopy[j].weight;
+                        if (r <= runningSum) {
+                            drawnIdx = j;
+                            break;
+                        }
+                    }
+
+                    if (drawnIdx === -1) {
+                        drawnIdx = poolCopy.length - 1;
+                    }
+
+                    drawn.push(poolCopy[drawnIdx].mod);
+                    poolCopy.splice(drawnIdx, 1);
+                }
+
+                return drawn;
+            }
+
+            function chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random) {
+                if (choices.length === 0) return -1;
+
+                let bestMod = null;
+                let bestScore = -1;
+
+                choices.forEach((mod) => {
+                    if (!mod) return;
+
+                    const cl = classification[mod.idx] || 'unselected';
+
+                    // Check classification of the next tier in this group
+                    let nextTierClass = 'none';
+                    modifiers.forEach((m) => {
+                        if (m.group === mod.group && m.tier === mod.tier + 1) {
+                            nextTierClass = classification[m.idx] || 'unselected';
+                        }
+                    });
+
+                    // Count contiguous future green upgrades starting from next tier (tier 2)
+                    let futureGreens = 0;
+                    if (mod.tier === 1) {
+                        let t2Green = false;
+                        let t3Green = false;
+                        modifiers.forEach((m) => {
+                            if (m.group === mod.group) {
+                                if (m.tier === 2 && classification[m.idx] === 'green') {
+                                    t2Green = true;
+                                }
+                                if (m.tier === 3 && classification[m.idx] === 'green') {
+                                    t3Green = true;
+                                }
+                            }
+                        });
+                        if (t2Green) {
+                            futureGreens = 1;
+                            if (t3Green) {
+                                futureGreens = 2;
+                            }
+                        }
+                    }
+
+                    // Check if there are any remaining upgrade tiers that are Green
+                    let hasGreenUpgrade = false;
+                    modifiers.forEach((m) => {
+                        if (m.group === mod.group && m.tier > mod.tier) {
+                            if (classification[m.idx] === 'green') {
+                                hasGreenUpgrade = true;
+                            }
+                        }
+                    });
+
+                    let score = 0;
+                    if (cl === 'green') {
+                        // Green modifiers: Tier 1 with future greens (sorted by count) > Tier 2 > Tier 3 > Tier 1 with 0 future greens
+                        if (mod.tier === 1) {
+                            if (futureGreens === 2) score = 8.0;
+                            else if (futureGreens === 1) score = 5.5;
+                            else score = 5.0;
+                        } else if (mod.tier === 2) {
+                            score = 7.0;
+                        } else { // tier 3
+                            score = 6.0;
+                        }
+
+                        // Penalty for unlocking worse tiers
+                        if (nextTierClass === 'red') {
+                            score -= 1.5;
+                        } else if (nextTierClass === 'yellow') {
+                            score -= 0.5;
+                        }
+                    } else if (cl === 'yellow') {
+                        // Yellow modifiers: Tier 3 gets 4.0, Tier 2 gets 3.5, Tier 1 gets 3.0
+                        if (mod.tier === 3) score = 4.0;
+                        else if (mod.tier === 2) score = 3.5;
+                        else score = 3.0;
+
+                        // Bonus if it unlocks a green upgrade path
+                        if (hasGreenUpgrade) {
+                            score += 1.0;
+                        }
+                        
+                        // Penalty for unlocking red
+                        if (nextTierClass === 'red') {
+                            score -= 1.5;
+                        }
+                    } else {
+                        // Red modifiers: Tier 3 gets 2.0, Tier 2 gets 1.5, Tier 1 gets 1.0
+                        if (mod.tier === 3) score = 2.0;
+                        else if (mod.tier === 2) score = 1.5;
+                        else score = 1.0;
+
+                        // Bonus if it unlocks a green upgrade path
+                        if (hasGreenUpgrade) {
+                            score += 1.0;
+                        }
+                    }
+
+                    // Tie-breaker: prefer upgrades to previously picked modifiers
+                    const isUpgrade = mod.tier > 1;
+                    if (isUpgrade) {
+                        score += 0.1;
+                    }
+
+                    score += random() * 0.0001;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMod = mod;
+                    }
+                });
+
+                return bestMod ? bestMod.idx : -1;
+            }
+
+            self.onmessage = function(e) {
+                const { modifiers, classification, purpleIndices, poolMult, simRuns, reentryGreenW11, w12Overrides, deathGreen, deathYellow1, deathYellow2, deathFee, supplyCost } = e.data;
+
+                const blasphemy1 = modifiers.find(m => m.name === "Blasphemy I");
+                const relentless1 = modifiers.find(m => m.name === "Relentless I");
+                const frailty1 = modifiers.find(m => m.name === "Frailty I");
+                const reentry2 = modifiers.find(m => m.name === "Reentry II");
+                const reentry2Idx = reentry2 ? reentry2.idx : -1;
+
+                const yellowRiskCount = Array(12).fill(0);
+                const redRiskCount = Array(12).fill(0);
+                const random = Math.random;
+
+                // Profit precomputations
+                const waveRewards = [29280, 45472.43, 53226.66, 79739.6, 152267.59, 156533.64, 211858.1, 230164.52, 388921.39, 478855.2, 713654.63, 1255154.42];
+                const cumulativeRewards = [0];
+                let rewardSum = 0;
+                for (let i = 0; i < 12; i++) {
+                    rewardSum += waveRewards[i];
+                    cumulativeRewards.push(rewardSum);
+                }
+
+                const pGreen = (deathGreen || 0) / 100;
+                const pYellow1 = (deathYellow1 || 0) / 100;
+                const pYellow2 = (deathYellow2 || 0) / 100;
+
+                const strategies = ['reset_red', 'reset_2_yellows', 'reset_any_yellow'];
+                const stats = {
+                    reset_red: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
+                    reset_2_yellows: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
+                    reset_any_yellow: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] }
+                };
+
+                const startWave = purpleIndices.length + 1;
+
+                for (let run = 0; run < simRuns; run++) {
+                    // 1. Run draft simulation once for risk metrics
+                    {
+                        const activeIndices = new Set(purpleIndices);
+                        const groupTiers = {};
+                        purpleIndices.forEach(idx => {
+                            const mod = modifiers[idx];
+                            const currentMax = groupTiers[mod.group] || 0;
+                            if (mod.tier > currentMax) {
+                                groupTiers[mod.group] = mod.tier;
+                            }
+                        });
+
+                        let runIsYellowOrRed = false;
+                        let runIsRed = false;
+
+                        purpleIndices.forEach(idx => {
+                            const cl = classification[idx] || 'unselected';
+                            if (cl === 'yellow') {
+                                runIsYellowOrRed = true;
+                            } else if (cl === 'red') {
+                                runIsRed = true;
+                                runIsYellowOrRed = true;
+                            }
+                        });
+
+                        for (let w = startWave; w <= 12; w++) {
+                            let chosenModIdx = -1;
+                            let choices = [];
+
+                            const originalReentry2Class = (reentryGreenW11 && reentry2Idx !== -1 && w === 11) ? classification[reentry2Idx] : null;
+                            if (originalReentry2Class !== null) {
+                                classification[reentry2Idx] = 'green';
+                            }
+
+                            const appliedW12Overrides = [];
+                            if (w === 12 && w12Overrides) {
+                                Object.keys(w12Overrides).forEach((idxStr) => {
+                                    const idx = parseInt(idxStr);
+                                    const origClass = classification[idx];
+                                    appliedW12Overrides.push({ idx, origClass });
+                                    classification[idx] = w12Overrides[idxStr];
+                                });
+                            }
+
+                            if (w === 1) {
+                                choices = [blasphemy1, relentless1, frailty1];
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                            } else {
+                                const pool = [];
+                                modifiers.forEach((mod) => {
+                                    if (activeIndices.has(mod.idx)) return;
+                                    if (w < 7 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo")) return;
+                                    if (w === 12) {
+                                        if (mod.name === "Red Flag" || mod.name === "Dynamic Duo" ||
+                                            mod.group === "Manti-mayhem" || mod.group === "Myopia" ||
+                                            mod.group === "Reentry") {
+                                            return;
+                                        }
+                                    }
+
+                                    const currentTier = groupTiers[mod.group] || 0;
+                                    if (mod.tier === currentTier + 1) {
+                                        const weight = currentTier > 0 ? poolMult : 1;
+                                        pool.push({ mod, weight });
+                                    }
+                                });
+
+                                choices = drawWeightedWithoutReplacement(pool, 3, random);
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                            }
+
+                            if (chosenModIdx !== -1) {
+                                activeIndices.add(chosenModIdx);
+                                const chosenMod = modifiers[chosenModIdx];
+                                groupTiers[chosenMod.group] = chosenMod.tier;
+                            }
+
+                            let allYellowOrRed = true;
+                            let allRed = true;
+
+                            choices.forEach((choice) => {
+                                if (!choice) return;
+                                const cl = (w === 12 && w12Overrides && w12Overrides[choice.idx] !== undefined)
+                                    ? w12Overrides[choice.idx]
+                                    : (classification[choice.idx] || 'unselected');
+                                if (cl === 'green') {
+                                    allYellowOrRed = false;
+                                    allRed = false;
+                                } else if (cl === 'yellow') {
+                                    allRed = false;
+                                }
+                            });
+
+                            if (allYellowOrRed) {
+                                runIsYellowOrRed = true;
+                            }
+                            if (allRed) {
+                                runIsRed = true;
+                                runIsYellowOrRed = true;
+                            }
+
+                            if (runIsYellowOrRed) {
+                                yellowRiskCount[w - 1]++;
+                            }
+                            if (runIsRed) {
+                                redRiskCount[w - 1]++;
+                            }
+
+                            if (appliedW12Overrides.length > 0) {
+                                appliedW12Overrides.forEach((override) => {
+                                    classification[override.idx] = override.origClass;
+                                });
+                            }
+                            if (originalReentry2Class !== null) {
+                                classification[reentry2Idx] = originalReentry2Class;
+                            }
+                        }
+                    }
+
+                    // 2. Run profit simulations for each strategy
+                    strategies.forEach((strat) => {
+                        const activeIndices = new Set(purpleIndices);
+                        const groupTiers = {};
+                        purpleIndices.forEach(idx => {
+                            const mod = modifiers[idx];
+                            const currentMax = groupTiers[mod.group] || 0;
+                            if (mod.tier > currentMax) {
+                                groupTiers[mod.group] = mod.tier;
+                            }
+                        });
+
+                        let activeYellowCount = 0;
+                        purpleIndices.forEach(idx => {
+                            const cl = classification[idx] || 'unselected';
+                            if (cl === 'yellow') {
+                                activeYellowCount++;
+                            }
+                        });
+
+                        let runIsDead = false;
+                        let waveReached = startWave - 1;
+
+                        for (let w = startWave; w <= 12; w++) {
+                            let pDeath = pGreen;
+                            if (activeYellowCount === 1) {
+                                pDeath = pYellow1;
+                            } else if (activeYellowCount >= 2) {
+                                pDeath = pYellow2;
+                            }
+
+                            if (random() < pDeath) {
+                                runIsDead = true;
+                                waveReached = w - 1;
+                                break;
+                            }
+
+                            waveReached = w;
+
+                            let chosenModIdx = -1;
+                            let choices = [];
+
+                            const originalReentry2Class = (reentryGreenW11 && reentry2Idx !== -1 && w === 11) ? classification[reentry2Idx] : null;
+                            if (originalReentry2Class !== null) {
+                                classification[reentry2Idx] = 'green';
+                            }
+
+                            const appliedW12Overrides = [];
+                            if (w === 12 && w12Overrides) {
+                                Object.keys(w12Overrides).forEach((idxStr) => {
+                                    const idx = parseInt(idxStr);
+                                    const origClass = classification[idx];
+                                    appliedW12Overrides.push({ idx, origClass });
+                                    classification[idx] = w12Overrides[idxStr];
+                                });
+                            }
+
+                            if (w === 1) {
+                                choices = [blasphemy1, relentless1, frailty1];
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                            } else {
+                                const pool = [];
+                                modifiers.forEach((mod) => {
+                                    if (activeIndices.has(mod.idx)) return;
+                                    if (w < 7 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo")) return;
+                                    if (w === 12) {
+                                        if (mod.name === "Red Flag" || mod.name === "Dynamic Duo" ||
+                                            mod.group === "Manti-mayhem" || mod.group === "Myopia" ||
+                                            mod.group === "Reentry") {
+                                            return;
+                                        }
+                                    }
+
+                                    const currentTier = groupTiers[mod.group] || 0;
+                                    if (mod.tier === currentTier + 1) {
+                                        const weight = currentTier > 0 ? poolMult : 1;
+                                        pool.push({ mod, weight });
+                                    }
+                                });
+
+                                choices = drawWeightedWithoutReplacement(pool, 3, random);
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                            }
+
+                            if (appliedW12Overrides.length > 0) {
+                                appliedW12Overrides.forEach((override) => {
+                                    classification[override.idx] = override.origClass;
+                                });
+                            }
+                            if (originalReentry2Class !== null) {
+                                classification[reentry2Idx] = originalReentry2Class;
+                            }
+
+                            let allRed = true;
+                            choices.forEach((choice) => {
+                                if (!choice) return;
+                                const cl = (w === 12 && w12Overrides && w12Overrides[choice.idx] !== undefined)
+                                    ? w12Overrides[choice.idx]
+                                    : (classification[choice.idx] || 'unselected');
+                                if (cl !== 'red') {
+                                    allRed = false;
+                                }
+                            });
+
+                            if (allRed) {
+                                break;
+                            }
+
+                            if (chosenModIdx !== -1) {
+                                activeIndices.add(chosenModIdx);
+                                const chosenMod = modifiers[chosenModIdx];
+                                groupTiers[chosenMod.group] = chosenMod.tier;
+
+                                const chosenClass = (w === 12 && w12Overrides && w12Overrides[chosenModIdx] !== undefined)
+                                    ? w12Overrides[chosenModIdx]
+                                    : (classification[chosenModIdx] || 'unselected');
+
+                                if (chosenClass === 'yellow') {
+                                    activeYellowCount++;
+                                }
+                            }
+
+                            if (strat === 'reset_any_yellow' && activeYellowCount >= 1) {
+                                break;
+                            }
+                            if (strat === 'reset_2_yellows' && activeYellowCount >= 2) {
+                                break;
+                            }
+                        }
+
+                        let runProfit = 0;
+                        let wavesAttempted = runIsDead ? waveReached + 1 : waveReached;
+                        if (runIsDead) {
+                            runProfit = -deathFee - (wavesAttempted * supplyCost);
+                        } else {
+                            runProfit = cumulativeRewards[waveReached] - (wavesAttempted * supplyCost);
+                        }
+
+                        stats[strat].totalWave += waveReached;
+                        stats[strat].totalProfit += runProfit;
+                        stats[strat].totalAttempts += wavesAttempted;
+                        stats[strat].list.push(waveReached);
+                    });
+                }
+
+                self.postMessage({
+                    yellowRiskCount,
+                    redRiskCount,
+                    profitStats: {
+                        reset_red: {
+                            avgWave: stats.reset_red.totalWave / simRuns,
+                            avgProfit: stats.reset_red.totalProfit / simRuns,
+                            profitPerWave: stats.reset_red.totalAttempts !== 0 ? stats.reset_red.totalProfit / stats.reset_red.totalAttempts : 0,
+                            wavesReachedList: stats.reset_red.list
+                        },
+                        reset_2_yellows: {
+                            avgWave: stats.reset_2_yellows.totalWave / simRuns,
+                            avgProfit: stats.reset_2_yellows.totalProfit / simRuns,
+                            profitPerWave: stats.reset_2_yellows.totalAttempts !== 0 ? stats.reset_2_yellows.totalProfit / stats.reset_2_yellows.totalAttempts : 0,
+                            wavesReachedList: stats.reset_2_yellows.list
+                        },
+                        reset_any_yellow: {
+                            avgWave: stats.reset_any_yellow.totalWave / simRuns,
+                            avgProfit: stats.reset_any_yellow.totalProfit / simRuns,
+                            profitPerWave: stats.reset_any_yellow.totalAttempts !== 0 ? stats.reset_any_yellow.totalProfit / stats.reset_any_yellow.totalAttempts : 0,
+                            wavesReachedList: stats.reset_any_yellow.list
+                        }
+                    }
+                });
+            };
+            };
+        `;
+
+        let activeWorkers = [];
+
+        // Calculate risks asynchronously using Web Workers
+        function calculateRisksAsync() {
+            activeWorkers.forEach(w => w.terminate());
+            activeWorkers = [];
+
             const poolMult = parseInt(document.getElementById('poolMultiplier').value) || 3;
+            const reentryGreenW11 = document.getElementById('reentryGreenW11').checked;
+
+            const deathGreen = parseFloat(document.getElementById('deathGreen').value) || 0;
+            const deathYellow1 = parseFloat(document.getElementById('deathYellow1').value) || 0;
+            const deathYellow2 = parseFloat(document.getElementById('deathYellow2').value) || 0;
+            const cofferDiscount = parseFloat(document.getElementById('cofferDiscount').value) || 0;
+            const supplyCost = parseFloat(document.getElementById('supplyCost').value) || 0;
+            const deathFee = 500000 * (cofferDiscount / 100);
             
-            // Count classifications
             let greenCount = Object.values(state.classification).filter(c => c === 'green').length;
             let yellowCount = Object.values(state.classification).filter(c => c === 'yellow').length;
             let redCount = Object.values(state.classification).filter(c => c === 'red').length;
@@ -417,63 +1362,117 @@
             document.getElementById('yellowCount').textContent = yellowCount;
             document.getElementById('redCount').textContent = redCount;
 
-            // Wave-by-wave simulation
-            const waves = [
-                { num: 1, yellowRisk: 0, redRisk: 0 },
-                { num: 2, yellowRisk: 0, redRisk: 0 },
-                { num: 3, yellowRisk: 0, redRisk: 0 },
-                { num: 4, yellowRisk: 0, redRisk: 0 },
-                { num: 5, yellowRisk: 0, redRisk: 0 },
-                { num: 6, yellowRisk: 0, redRisk: 0 },
-                { num: 7, yellowRisk: 0, redRisk: 0 },
-                { num: 8, yellowRisk: 0, redRisk: 0 },
-                { num: 9, yellowRisk: 0, redRisk: 0 },
-                { num: 10, yellowRisk: 0, redRisk: 0 },
-                { num: 11, yellowRisk: 0, redRisk: 0 }
-            ];
-
-            // Simplified risk calculation
-            // Risk increases based on the ratio of bad modifiers to good ones
             const totalModifiers = greenCount + yellowCount + redCount;
-            
             if (totalModifiers === 0) {
                 document.getElementById('waveInfo').textContent = "Select modifiers to calculate risk";
-                return waves;
+                document.getElementById('waveReset').textContent = "-";
+                if (document.getElementById('profitTableBody')) {
+                    document.getElementById('profitTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary, #999); padding: 10px;">Select modifiers to calculate profit</td></tr>';
+                    document.getElementById('strategyRecommendation').textContent = "";
+                }
+                renderOrUpdateChart(Array.from({ length: 12 }, (_, i) => ({ num: i + 1, yellowRisk: 0, redRisk: 0 })));
+                return;
             }
 
-            const yellowRatio = yellowCount / totalModifiers;
-            const redRatio = redCount / totalModifiers;
+            const purpleIndices = Object.keys(state.purple).filter(idx => state.purple[idx]).map(Number);
+            const startWave = purpleIndices.length + 1;
 
-            // Risk compounds over waves
-            let cumulativeYellow = 0;
-            let cumulativeRed = 0;
-
-            for (let w = 0; w < waves.length; w++) {
-                // Wave 7+ includes Red Flag and Dynamic Duo (additional red modifiers)
-                const waveMultiplier = w >= 6 ? 1.15 : 1;
-                
-                // Calculate incremental risk per wave
-                const waveYellowRisk = Math.min(100, yellowRatio * 100 * (w + 1) * 0.8 * waveMultiplier);
-                const waveRedRisk = Math.min(100, redRatio * 100 * (w + 1) * 1.2 * waveMultiplier);
-
-                waves[w].yellowRisk = Math.round(Math.min(waveYellowRisk, 100));
-                waves[w].redRisk = Math.round(Math.min(waveRedRisk, 100));
+            if (startWave > 12) {
+                document.getElementById('waveReset').textContent = "-";
+                document.getElementById('waveInfo').textContent = "Run complete! All waves completed.";
+                renderOrUpdateChart([]);
+                return;
             }
 
-            // Determine estimated reset wave
-            const resetWave = waves.findIndex(w => w.redRisk > 60);
-            if (resetWave >= 0) {
-                document.getElementById('waveReset').textContent = resetWave + 1;
-            } else {
-                document.getElementById('waveReset').textContent = "Safe";
-            }
+            const precisionVal = document.getElementById('simPrecision').value;
+            const simRuns = precisionVal === '2' ? 50000 : 5000;
 
-            return waves;
+            const numWorkers = navigator.hardwareConcurrency || 4;
+            const runsPerWorker = Math.floor(simRuns / numWorkers);
+
+            document.getElementById('waveInfo').innerHTML = `<span style="color: var(--text-secondary, #999);">Simulating ${simRuns.toLocaleString()} runs across ${numWorkers} threads...</span>`;
+
+            // Prepare inline Worker blob
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+
+            const aggregatedYellow = Array(12).fill(0);
+            const aggregatedRed = Array(12).fill(0);
+            const profitStatsList = [];
+            let workersFinished = 0;
+
+            modifiers.forEach((m, idx) => {
+                m.idx = idx;
+            });
+
+            for (let i = 0; i < numWorkers; i++) {
+                const worker = new Worker(workerUrl);
+                activeWorkers.push(worker);
+
+                worker.onmessage = function(e) {
+                    const { yellowRiskCount, redRiskCount, profitStats } = e.data;
+                    for (let w = 0; w < 12; w++) {
+                        aggregatedYellow[w] += yellowRiskCount[w];
+                        aggregatedRed[w] += redRiskCount[w];
+                    }
+                    profitStatsList.push(profitStats);
+
+                    workersFinished++;
+                    if (workersFinished === numWorkers) {
+                        const waves = Array.from({ length: 12 - startWave + 1 }, (_, idx) => {
+                            const wIdx = startWave - 1 + idx;
+                            const yellowRisk = parseFloat(((aggregatedYellow[wIdx] / simRuns) * 100).toPrecision(5));
+                            const redRisk = parseFloat(((aggregatedRed[wIdx] / simRuns) * 100).toPrecision(5));
+                            return { num: wIdx + 1, yellowRisk, redRisk };
+                        });
+
+                        URL.revokeObjectURL(workerUrl);
+                        activeWorkers = [];
+
+                        updateUIWithResults(waves);
+                        updateProfitUI(profitStatsList, simRuns, waves);
+                    }
+                };
+
+                worker.postMessage({
+                    modifiers,
+                    classification: state.classification,
+                    purpleIndices,
+                    poolMult,
+                    simRuns: runsPerWorker + (i === 0 ? simRuns % numWorkers : 0),
+                    reentryGreenW11,
+                    w12Overrides: state.w12Overrides,
+                    deathGreen,
+                    deathYellow1,
+                    deathYellow2,
+                    deathFee,
+                    supplyCost
+                });
+            }
         }
 
-        // Update chart
-        function updateChart() {
-            const waves = calculateRisks();
+        // Update UI statistics and trigger chart render
+        function updateUIWithResults(waves) {
+            const w12Data = waves.find(w => w.num === 12);
+            if (w12Data) {
+                document.getElementById('waveReset').innerHTML = 
+                    `<span style="color: #ffc107;">${w12Data.yellowRisk}%</span> / <span style="color: #f44336;">${w12Data.redRisk}%</span>`;
+            } else {
+                document.getElementById('waveReset').textContent = "-";
+            }
+
+            const resetWave = waves.findIndex(w => w.redRisk > 60);
+            if (resetWave >= 0) {
+                document.getElementById('waveInfo').textContent = `High risk of run failure (>60%) starting at Wave ${waves[resetWave].num}.`;
+            } else {
+                document.getElementById('waveInfo').textContent = "";
+            }
+
+            renderOrUpdateChart(waves);
+        }
+
+        // Render or Update Chart.js instance
+        function renderOrUpdateChart(waves) {
             const waveLabels = waves.map(w => `Wave ${w.num}`);
             const yellowData = waves.map(w => w.yellowRisk);
             const redData = waves.map(w => w.redRisk);
@@ -521,6 +1520,20 @@
                         plugins: {
                             legend: {
                                 display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += parseFloat(context.parsed.y.toPrecision(5)) + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
                             }
                         },
                         scales: {
@@ -553,12 +1566,16 @@
 
         // Update all calculations
         function updateCalculations() {
-            updateChart();
+            calculateRisksAsync();
         }
+
+        // Sort button click
+        document.getElementById('sortBtn').addEventListener('click', sortModifiers);
 
         // Reset all
         document.getElementById('resetBtn').addEventListener('click', () => {
-            initModifiers();
+            initModifiers(false);
+            state.w12Overrides = {};
             renderModifiers();
             updateCalculations();
         });
@@ -566,10 +1583,168 @@
         // Pool multiplier change
         document.getElementById('poolMultiplier').addEventListener('change', updateCalculations);
 
-        // Initialize
-        initModifiers();
-        renderModifiers();
-        updateCalculations();
+        // Reentry II green on wave 11 checkbox change
+        document.getElementById('reentryGreenW11').addEventListener('change', updateCalculations);
+
+        // Simulation precision change
+        document.getElementById('simPrecision').addEventListener('input', (e) => {
+            const val = e.target.value;
+            const label = document.getElementById('precisionLabel');
+            const desc = document.getElementById('simRunsDesc');
+            if (val === '2') {
+                label.textContent = "Precise (50k)";
+                if (desc) desc.textContent = "50,000 runs";
+            } else {
+                label.textContent = "Fast (5k)";
+                if (desc) desc.textContent = "5,000 runs";
+            }
+            updateCalculations();
+        });
+
+        // Update UI statistics and trigger chart render
+        function updateUIWithResults(waves) {
+            const w12Data = waves.find(w => w.num === 12);
+            if (w12Data) {
+                document.getElementById('waveReset').innerHTML = 
+                    `<span style="color: #ffc107;">${w12Data.yellowRisk}%</span> / <span style="color: #f44336;">${w12Data.redRisk}%</span>`;
+            } else {
+                document.getElementById('waveReset').textContent = "-";
+            }
+
+            const resetWave = waves.findIndex(w => w.redRisk > 60);
+            if (resetWave >= 0) {
+                document.getElementById('waveInfo').textContent = `High risk of run failure (>60%) starting at Wave ${waves[resetWave].num}.`;
+            } else {
+                document.getElementById('waveInfo').textContent = "";
+            }
+
+            renderOrUpdateChart(waves);
+        }
+
+        // Profit UI updating and quartile calculation
+        function updateProfitUI(profitStatsList, totalSimRuns, waves) {
+            const keys = ['reset_red', 'reset_2_yellows', 'reset_any_yellow'];
+            const labels = {
+                'reset_red': 'Reset on Red Only',
+                'reset_2_yellows': 'Reset on 2nd Yellow',
+                'reset_any_yellow': 'Reset on 1st Yellow'
+            };
+
+            const aggregated = {};
+            keys.forEach(k => {
+                aggregated[k] = {
+                    totalWaveReached: 0,
+                    totalProfit: 0,
+                    totalWavesAttempted: 0,
+                    wavesReachedList: []
+                };
+            });
+
+            profitStatsList.forEach(stat => {
+                if (!stat) return;
+                keys.forEach(k => {
+                    const workerStat = stat[k];
+                    if (!workerStat) return;
+                    const runs = workerStat.wavesReachedList.length;
+                    aggregated[k].totalWaveReached += workerStat.avgWave * runs;
+                    aggregated[k].totalProfit += workerStat.avgProfit * runs;
+                    const attempts = workerStat.profitPerWave !== 0 ? (workerStat.avgProfit * runs) / workerStat.profitPerWave : 0;
+                    aggregated[k].totalWavesAttempted += attempts;
+                    aggregated[k].wavesReachedList = aggregated[k].wavesReachedList.concat(workerStat.wavesReachedList);
+                });
+            });
+
+            const results = {};
+            let bestStrategy = '';
+            let maxProfit = -Infinity;
+
+            const tbody = document.getElementById('profitTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+            }
+
+            keys.forEach(k => {
+                const avgWave = aggregated[k].totalWaveReached / totalSimRuns;
+                const avgProfit = aggregated[k].totalProfit / totalSimRuns;
+                const profitPerWave = aggregated[k].totalWavesAttempted !== 0 ? aggregated[k].totalProfit / aggregated[k].totalWavesAttempted : 0;
+                
+                const list = aggregated[k].wavesReachedList.sort((a, b) => a - b);
+                const q1 = list.length > 0 ? list[Math.floor(list.length * 0.25)] : 0;
+                const q2 = list.length > 0 ? list[Math.floor(list.length * 0.50)] : 0;
+                const q3 = list.length > 0 ? list[Math.floor(list.length * 0.75)] : 0;
+
+                results[k] = {
+                    avgWave,
+                    avgProfit,
+                    profitPerWave,
+                    q1, q2, q3
+                };
+
+                if (avgProfit > maxProfit) {
+                    maxProfit = avgProfit;
+                    bestStrategy = k;
+                }
+
+                if (tbody) {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border-color, #333)';
+                    tr.innerHTML = `
+                        <td style="padding: 8px 4px; font-weight: 500;">${labels[k]}</td>
+                        <td style="padding: 8px 4px; text-align: right;">${avgWave.toFixed(2)}</td>
+                        <td style="padding: 8px 4px; text-align: right;">${formatGP(profitPerWave)}</td>
+                        <td style="padding: 8px 4px; text-align: right; font-weight: bold; color: ${avgProfit >= 0 ? '#4caf50' : '#f44336'};">${formatGP(avgProfit)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            const recBox = document.getElementById('strategyRecommendation');
+            if (recBox) {
+                let recColor = '#4caf50';
+                let recHtml = `
+                    <div style="font-size: 15px; font-weight: 600; color: ${recColor}; margin-bottom: 8px;">
+                        Recommended Strategy: ${labels[bestStrategy]}
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary, #999); line-height: 1.4;">
+                        Based on your death risks and settings, resetting on <strong>${labels[bestStrategy].toLowerCase()}</strong> yields the highest expected profit of <strong>${formatGP(results[bestStrategy].avgProfit)}</strong> per run.
+                    </div>
+                `;
+                recBox.innerHTML = recHtml;
+            }
+
+            const best = results[bestStrategy];
+            if (best) {
+                const infoText = `
+                    <div style="display: flex; flex-direction: column; gap: 4px; text-align: left; background: rgba(0, 0, 0, 0.25); padding: 10px; border-radius: 4px; margin-top: 10px; font-family: monospace; font-size: 11px; line-height: 1.4; border-left: 3px solid #4caf50;">
+                        <div style="color: #4caf50; font-weight: bold;">Optimal Strategy: ${labels[bestStrategy]}</div>
+                        <div>Avg Expected Profit: <span style="color: #fff; font-weight: bold;">${formatGP(best.avgProfit)}</span></div>
+                        <div>Avg Profit / Wave: <span style="color: #fff;">${formatGP(best.profitPerWave)}</span></div>
+                        <div>Wave Reached Quartiles: Q1 (25%): <span style="color: #ffc107;">Wave ${best.q1}</span> | Median (50%): <span style="color: #ffc107;">Wave ${best.q2}</span> | Q3 (75%): <span style="color: #ffc107;">Wave ${best.q3}</span></div>
+                    </div>
+                `;
+                
+                const resetWave = waves.findIndex(w => w.redRisk > 60);
+                let riskMsg = "";
+                if (resetWave >= 0) {
+                    riskMsg = `<span style="color: #f44336; font-weight: bold;">High risk of run failure (>60%) starting at Wave ${waves[resetWave].num}.</span>`;
+                }
+                document.getElementById('waveInfo').innerHTML = (riskMsg ? riskMsg + "<br>" : "") + infoText;
+            }
+        }
+
+        function formatGP(val) {
+            const isNegative = val < 0;
+            const absVal = Math.abs(val);
+            let formatted = "";
+            if (absVal >= 1000000) {
+                formatted = (absVal / 1000000).toFixed(2) + 'M';
+            } else if (absVal >= 1000) {
+                formatted = (absVal / 1000).toFixed(1) + 'k';
+            } else {
+                formatted = absVal.toFixed(0);
+            }
+            return (isNegative ? '-' : '') + formatted + ' gp';
+        }
     </script>
 </body>
 </html>
