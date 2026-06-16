@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,21 +12,20 @@
     <script src="/js/auth/firebase-auth.js"></script>
     <script src="/js/core/auth-manager.js"></script>
     <script src="/js/auth/pages-authentication.js"></script>
-    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: var(--bg-primary, #0a0e27);
             color: var(--text-primary, #e0e0e0);
             padding: 20px;
         }
-        
+
         .container-main {
             max-width: 1400px;
             margin: 0 auto;
@@ -34,13 +34,13 @@
             gap: 20px;
             padding: 20px;
         }
-        
+
         @media (min-width: 768px) {
             .container-main {
                 grid-template-columns: 1fr 1fr;
             }
         }
-        
+
         .card {
             background: var(--bg-secondary, #1a1f3a);
             border: 1px solid var(--border-color, #333);
@@ -48,13 +48,13 @@
             padding: 20px;
             overflow: hidden;
         }
-        
+
         .card h2 {
             margin-bottom: 15px;
             color: var(--text-primary, #e0e0e0);
             font-size: 18px;
         }
-        
+
         .controls-section {
             display: flex;
             gap: 10px;
@@ -62,7 +62,7 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        
+
         .form-control {
             flex: 1;
             min-width: 100px;
@@ -73,7 +73,7 @@
             color: var(--text-primary, #e0e0e0);
             font-size: 14px;
         }
-        
+
         .btn {
             padding: 8px 16px;
             background: var(--btn-bg, #2d5016);
@@ -85,19 +85,19 @@
             font-weight: 500;
             transition: background 0.2s;
         }
-        
+
         .btn:hover {
             background: var(--btn-hover, #3d6b1f);
         }
-        
+
         .btn-primary {
             background: var(--color-fire-red, #d32f2f);
         }
-        
+
         .btn-primary:hover {
             background: #b71c1c;
         }
-        
+
         .modifier-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -107,7 +107,7 @@
             overflow-y: auto;
             padding-right: 5px;
         }
-        
+
         .modifier-tile {
             cursor: pointer;
             border-radius: 8px;
@@ -124,7 +124,7 @@
             background: var(--bg-tertiary, #1f2638);
             position: relative;
         }
-        
+
         .w12-override-container {
             position: absolute;
             bottom: 4px;
@@ -133,13 +133,13 @@
             align-items: center;
             gap: 4px;
         }
-        
+
         .w12-override-label {
             font-size: 10px;
             color: var(--text-secondary, #999);
             font-weight: bold;
         }
-        
+
         .w12-select {
             font-size: 10px;
             background: var(--input-bg, #252d47);
@@ -152,93 +152,94 @@
             max-width: 75px;
             font-weight: 500;
         }
+
         .w12-select:hover {
             border-color: #555;
             background: var(--bg-secondary, #1a1f3a);
         }
-        
+
         .modifier-tile img {
             width: 60px;
             height: 60px;
             object-fit: cover;
             border-radius: 4px;
         }
-        
+
         .modifier-tile-label {
             font-size: 12px;
             font-weight: 600;
             word-break: break-word;
         }
-        
+
         .modifier-tile.green {
             background: rgba(76, 175, 80, 0.15);
             border-color: #4caf50;
         }
-        
+
         .modifier-tile.green:hover {
             background: rgba(76, 175, 80, 0.3);
             transform: scale(1.05);
         }
-        
+
         .modifier-tile.yellow {
             background: rgba(255, 193, 7, 0.15);
             border-color: #ffc107;
         }
-        
+
         .modifier-tile.yellow:hover {
             background: rgba(255, 193, 7, 0.3);
             transform: scale(1.05);
         }
-        
+
         .modifier-tile.red {
             background: rgba(244, 67, 54, 0.15);
             border-color: #f44336;
         }
-        
+
         .modifier-tile.red:hover {
             background: rgba(244, 67, 54, 0.3);
             transform: scale(1.05);
         }
-        
+
         .modifier-tile.purple {
             background: rgba(179, 136, 255, 0.15) !important;
             border-color: #b388ff !important;
             box-shadow: 0 0 8px rgba(179, 136, 255, 0.4);
         }
-        
+
         .modifier-tile.purple:hover {
             background: rgba(179, 136, 255, 0.3) !important;
             transform: scale(1.05);
         }
-        
+
         .modifier-tile.unselected {
             background: var(--bg-tertiary, #1f2638);
             border-color: var(--border-color, #333);
         }
-        
+
         .modifier-tile.unselected:hover {
             background: var(--bg-secondary, #252d47);
         }
-        
+
         .chart-container {
             position: relative;
             width: 100%;
             height: 400px;
             margin-bottom: 20px;
         }
-        
+
         canvas {
             width: 100% !important;
             height: 100% !important;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
-        
+
         .stat-box {
             background: var(--bg-tertiary, #1f2638);
             padding: 15px;
@@ -246,27 +247,27 @@
             text-align: center;
             border-left: 3px solid var(--border-color, #333);
         }
-        
+
         .stat-value {
             font-size: 24px;
             font-weight: bold;
             color: var(--color-fire-red, #d32f2f);
             margin-bottom: 5px;
         }
-        
+
         .stat-label {
             font-size: 12px;
             color: var(--text-secondary, #999);
             text-transform: uppercase;
         }
-        
+
         .wave-info {
             font-size: 13px;
             color: var(--text-secondary, #999);
             margin-top: 10px;
             text-align: center;
         }
-        
+
         .legend {
             display: flex;
             gap: 20px;
@@ -274,63 +275,73 @@
             margin-top: 15px;
             flex-wrap: wrap;
         }
-        
+
         .legend-item {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
         }
-        
+
         .legend-color {
             width: 20px;
             height: 3px;
             border-radius: 2px;
         }
-        
+
         .fullwidth {
             grid-column: 1 / -1;
         }
-        
+
         @media (max-width: 767px) {
             .container-main {
                 grid-template-columns: 1fr;
             }
-            
+
             .modifier-grid {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container-main">
         <!-- Left Panel: Modifier Selection -->
         <div class="card">
             <h2>Modifier Classification</h2>
             <div class="controls-section">
-                <label style="font-size: 13px; cursor: help;" title="Active modifier upgrades get this weight multiplier in the draft pool. Jagex has not publicly released the exact mathematical boost value, so this parameter can be adjusted to test different potential weights (e.g., 3x or 5x).">Pool Multiplier (?):</label>
-                <input type="number" id="poolMultiplier" class="form-control" value="3" min="1" max="10" style="max-width: 80px;" title="Active modifier upgrades get this weight multiplier in the draft pool. Jagex has not publicly released the exact mathematical boost value, so this parameter can be adjusted to test different potential weights (e.g., 3x or 5x).">
+                <label style="font-size: 13px; cursor: help;"
+                    title="Active modifier upgrades get this weight multiplier in the draft pool. Jagex has not publicly released the exact mathematical boost value, so this parameter can be adjusted to test different potential weights (e.g., 3x or 5x).">Pool
+                    Multiplier (?):</label>
+                <input type="number" id="poolMultiplier" class="form-control" value="3" min="1" max="10"
+                    style="max-width: 80px;"
+                    title="Active modifier upgrades get this weight multiplier in the draft pool. Jagex has not publicly released the exact mathematical boost value, so this parameter can be adjusted to test different potential weights (e.g., 3x or 5x).">
             </div>
             <div class="controls-section" style="align-items: center; gap: 8px;">
                 <label style="font-size: 13px;">Sim Precision:</label>
-                <input type="range" id="simPrecision" min="1" max="2" value="1" style="max-width: 70px; cursor: pointer;">
-                <span id="precisionLabel" style="font-size: 12px; font-weight: 600; color: var(--text-secondary, #999);">Fast (5k)</span>
+                <input type="range" id="simPrecision" min="1" max="2" value="1"
+                    style="max-width: 70px; cursor: pointer;">
+                <span id="precisionLabel"
+                    style="font-size: 12px; font-weight: 600; color: var(--text-secondary, #999);">Fast (5k)</span>
             </div>
             <div class="controls-section" style="align-items: center; gap: 8px;">
                 <input type="checkbox" id="reentryGreenW11" checked style="cursor: pointer;">
-                <label for="reentryGreenW11" style="font-size: 13px; cursor: pointer;" title="If checked, Reentry II is treated as a Green modifier on Wave 11 since it has no impact on Sol Heredit (Wave 12).">Reentry II green on wave 11</label>
+                <label for="reentryGreenW11" style="font-size: 13px; cursor: pointer;"
+                    title="If checked, Reentry II is treated as a Green modifier on Wave 11 since it has no impact on Sol Heredit (Wave 12).">Reentry
+                    II green on wave 11</label>
             </div>
 
             <div class="controls-section">
                 <button class="btn btn-primary" id="resetBtn">Reset All</button>
                 <button class="btn" id="sortBtn" style="background: var(--btn-bg, #2d5016);">Re-sort</button>
             </div>
-            
-            <h3 style="font-size: 14px; margin-top: 15px; margin-bottom: 10px;">Click to classify. Right-click / Long-press to toggle Purple (Taken):</h3>
+
+            <h3 style="font-size: 14px; margin-top: 15px; margin-bottom: 10px;">Click to classify. Right-click /
+                Long-press to toggle Purple (Taken):</h3>
             <div class="modifier-grid" id="modifierGrid"></div>
         </div>
-        
+
         <!-- Right Panel: Chart & Stats -->
         <div>
             <div class="card">
@@ -348,13 +359,19 @@
                         <span>Red Risk %</span>
                     </div>
                 </div>
-                <div style="font-size: 11px; color: var(--text-secondary, #999); margin-top: 15px; line-height: 1.5; text-align: center;">
-                    <em>Simulation Mode: Monte Carlo (<span id="simRunsDesc">5,000 runs</span>). Assumes dominant drafting strategy (prioritizing new Tier I modifiers with green upgrade paths, prioritizing Tier II upgrades over Tier III completions to maintain safe options, and avoiding unlocking red/yellow upgrades) evaluated through Wave 12 (Sol Heredit).<br>
-                    <strong>Yellow Risk (Difficult):</strong> Forced to pick Yellow/Red (all 3 options offered are Yellow or Red).<br>
-                    <strong>Red Risk (Insane/Reset):</strong> Forced to pick Red (all 3 options offered are Red).</em>
+                <div
+                    style="font-size: 11px; color: var(--text-secondary, #999); margin-top: 15px; line-height: 1.5; text-align: center;">
+                    <em>Simulation Mode: Monte Carlo (<span id="simRunsDesc">5,000 runs</span>). Assumes dominant
+                        drafting strategy (prioritizing new Tier I modifiers with green upgrade paths, prioritizing Tier
+                        II upgrades over Tier III completions to maintain safe options, and avoiding unlocking
+                        red/yellow upgrades) evaluated through Wave 12 (Sol Heredit).<br>
+                        <strong>Yellow Risk (Difficult):</strong> Forced to pick Yellow/Red (all 3 options offered are
+                        Yellow or Red).<br>
+                        <strong>Red Risk (Insane/Reset):</strong> Forced to pick Red (all 3 options offered are
+                        Red).</em>
                 </div>
             </div>
-            
+
             <div class="card" style="margin-top: 20px;">
                 <h2>Statistics</h2>
                 <div class="stats-grid">
@@ -383,40 +400,49 @@
         <div class="card fullwidth" style="margin-top: 20px;">
             <h2 style="margin-bottom: 10px;">Profit & Strategy Calculator</h2>
             <div style="font-size: 12px; color: var(--text-secondary, #999); margin-bottom: 15px; line-height: 1.4;">
-                Simulates run profitability under different reset strategies. Resets occur voluntarily (to claim reward before facing risk) or when forced to draft a Red modifier (run failure).
+                Simulates run profitability under different reset strategies. Resets occur voluntarily (to claim reward
+                before facing risk) or when forced to draft a Red modifier (run failure).
             </div>
-            
+
             <div class="controls-section" style="gap: 15px; margin-bottom: 20px;">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; color: var(--text-secondary, #999);">Green Death %:</label>
-                    <input type="number" id="deathGreen" class="form-control" value="2" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                    <input type="number" id="deathGreen" class="form-control" value="2" min="0" max="100"
+                        style="max-width: 90px; height: 32px; padding: 4px 8px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; color: var(--text-secondary, #999);">1 Yellow Death %:</label>
-                    <input type="number" id="deathYellow1" class="form-control" value="5" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                    <input type="number" id="deathYellow1" class="form-control" value="5" min="0" max="100"
+                        style="max-width: 90px; height: 32px; padding: 4px 8px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; color: var(--text-secondary, #999);">2+ Yellow Death %:</label>
-                    <input type="number" id="deathYellow2" class="form-control" value="15" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                    <input type="number" id="deathYellow2" class="form-control" value="15" min="0" max="100"
+                        style="max-width: 90px; height: 32px; padding: 4px 8px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; color: var(--text-secondary, #999);">Coffer Discount %:</label>
-                    <input type="number" id="cofferDiscount" class="form-control" value="50" min="0" max="100" style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                    <input type="number" id="cofferDiscount" class="form-control" value="50" min="0" max="100"
+                        style="max-width: 90px; height: 32px; padding: 4px 8px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; color: var(--text-secondary, #999);">Supply Cost/Wave:</label>
-                    <input type="number" id="supplyCost" class="form-control" value="15000" min="0" style="max-width: 110px; height: 32px; padding: 4px 8px;">
+                    <input type="number" id="supplyCost" class="form-control" value="15000" min="0"
+                        style="max-width: 110px; height: 32px; padding: 4px 8px;">
                 </div>
             </div>
 
             <!-- Profit Results Panel -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
                 <!-- Table of strategies -->
-                <div style="background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333);">
-                    <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-primary, #e0e0e0);">Strategy Comparison</h3>
+                <div
+                    style="background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333);">
+                    <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-primary, #e0e0e0);">Strategy
+                        Comparison</h3>
                     <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-color, #333); color: var(--text-secondary, #999);">
+                            <tr
+                                style="border-bottom: 1px solid var(--border-color, #333); color: var(--text-secondary, #999);">
                                 <th style="padding: 6px 4px;">Strategy</th>
                                 <th style="padding: 6px 4px; text-align: right;">Avg Wave</th>
                                 <th style="padding: 6px 4px; text-align: right;">Profit/Wave</th>
@@ -430,8 +456,10 @@
                 </div>
 
                 <!-- Recommendation box -->
-                <div style="background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333); display: flex; flex-direction: column; justify-content: center;">
-                    <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-primary, #e0e0e0);">Recommendation</h3>
+                <div
+                    style="background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333); display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-primary, #e0e0e0);">
+                        Recommendation</h3>
                     <div id="strategyRecommendation" style="font-size: 14px; font-weight: 500; line-height: 1.4;">
                         <!-- filled dynamically -->
                     </div>
@@ -544,7 +572,7 @@
                     <img src="${mod.img}" alt="${mod.name}">
                     <div class="modifier-tile-label">${mod.name}</div>
                 `;
-                
+
                 let pressTimer;
                 let isLongPress = false;
 
@@ -605,28 +633,28 @@
 
                 // If this modifier can be offered on Wave 12, add the override select
                 const isW12Eligible = mod.name !== "Red Flag" && mod.name !== "Dynamic Duo" &&
-                                      mod.group !== "Manti-mayhem" && mod.group !== "Myopia" &&
-                                      mod.group !== "Reentry";
-                
+                    mod.group !== "Manti-mayhem" && mod.group !== "Myopia" &&
+                    mod.group !== "Reentry";
+
                 if (isW12Eligible) {
                     const container = document.createElement('div');
                     container.className = 'w12-override-container';
-                    
+
                     const label = document.createElement('span');
                     label.className = 'w12-override-label';
                     label.textContent = 'W12:';
                     container.appendChild(label);
-                    
+
                     const select = document.createElement('select');
                     select.className = 'w12-select';
                     select.title = "Wave 12 (Sol Heredit) Override Classification";
-                    
+
                     const optDefault = document.createElement('option');
                     optDefault.value = 'default';
                     optDefault.textContent = 'Default';
                     optDefault.style.color = 'var(--text-secondary, #999)';
                     select.appendChild(optDefault);
-                    
+
                     const colors = { green: '#4caf50', yellow: '#ffc107', red: '#f44336' };
                     ['green', 'yellow', 'red'].forEach(c => {
                         const opt = document.createElement('option');
@@ -635,11 +663,11 @@
                         opt.style.color = colors[c];
                         select.appendChild(opt);
                     });
-                    
+
                     // Set current override value
                     const val = state.w12Overrides[idx] || 'default';
                     select.value = val;
-                    
+
                     const updateSelectColor = () => {
                         const v = select.value;
                         if (v === 'default') {
@@ -649,14 +677,14 @@
                         }
                     };
                     updateSelectColor();
-                    
+
                     // Prevent propagation to the tile's click/touch/contextmenu handlers
                     const stopBubble = (e) => e.stopPropagation();
                     container.addEventListener('click', stopBubble);
                     container.addEventListener('mousedown', stopBubble);
                     container.addEventListener('touchstart', stopBubble, { passive: true });
                     container.addEventListener('contextmenu', stopBubble);
-                    
+
                     select.addEventListener('change', (e) => {
                         const newVal = e.target.value;
                         if (newVal === 'default') {
@@ -667,7 +695,7 @@
                         updateSelectColor();
                         updateCalculations();
                     });
-                    
+
                     container.appendChild(select);
                     tile.appendChild(container);
                 }
@@ -815,7 +843,7 @@
                     if (hasGreenUpgrade) {
                         score += 1.0;
                     }
-                    
+
                     // Penalty for unlocking red
                     if (nextTierClass === 'red') {
                         score -= 1.5;
@@ -1188,6 +1216,13 @@
                         let waveReached = startWave - 1;
 
                         for (let w = startWave; w <= 12; w++) {
+                            if (strat === 'reset_any_yellow' && activeYellowCount >= 1) {
+                                break;
+                            }
+                            if (strat === 'reset_2_yellows' && activeYellowCount >= 2) {
+                                break;
+                            }
+
                             let pDeath = pGreen;
                             if (activeYellowCount === 1) {
                                 pDeath = pYellow1;
@@ -1285,13 +1320,6 @@
                                     activeYellowCount++;
                                 }
                             }
-
-                            if (strat === 'reset_any_yellow' && activeYellowCount >= 1) {
-                                break;
-                            }
-                            if (strat === 'reset_2_yellows' && activeYellowCount >= 2) {
-                                break;
-                            }
                         }
 
                         let runProfit = 0;
@@ -1352,7 +1380,7 @@
             const cofferDiscount = parseFloat(document.getElementById('cofferDiscount').value) || 0;
             const supplyCost = parseFloat(document.getElementById('supplyCost').value) || 0;
             const deathFee = 500000 * (1 - cofferDiscount / 100);
-            
+
             let greenCount = Object.values(state.classification).filter(c => c === 'green').length;
             let yellowCount = Object.values(state.classification).filter(c => c === 'yellow').length;
             let redCount = Object.values(state.classification).filter(c => c === 'red').length;
@@ -1408,7 +1436,7 @@
                 const worker = new Worker(workerUrl);
                 activeWorkers.push(worker);
 
-                worker.onmessage = function(e) {
+                worker.onmessage = function (e) {
                     const { yellowRiskCount, redRiskCount, profitStats } = e.data;
                     for (let w = 0; w < 12; w++) {
                         aggregatedYellow[w] += yellowRiskCount[w];
@@ -1454,7 +1482,7 @@
         function updateUIWithResults(waves) {
             const w12Data = waves.find(w => w.num === 12);
             if (w12Data) {
-                document.getElementById('waveReset').innerHTML = 
+                document.getElementById('waveReset').innerHTML =
                     `<span style="color: #ffc107;">${w12Data.yellowRisk}%</span> / <span style="color: #f44336;">${w12Data.redRisk}%</span>`;
             } else {
                 document.getElementById('waveReset').textContent = "-";
@@ -1522,7 +1550,7 @@
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         let label = context.dataset.label || '';
                                         if (label) {
                                             label += ': ';
@@ -1540,7 +1568,7 @@
                                 beginAtZero: true,
                                 max: 100,
                                 ticks: {
-                                    callback: function(value) {
+                                    callback: function (value) {
                                         return value + '%';
                                     },
                                     color: '#999'
@@ -1658,7 +1686,7 @@
                 const avgWave = aggregated[k].totalWaveReached / totalSimRuns;
                 const avgProfit = aggregated[k].totalProfit / totalSimRuns;
                 const profitPerWave = aggregated[k].totalWavesAttempted !== 0 ? aggregated[k].totalProfit / aggregated[k].totalWavesAttempted : 0;
-                
+
                 const list = aggregated[k].wavesReachedList.sort((a, b) => a - b);
                 const q1 = list.length > 0 ? list[Math.floor(list.length * 0.25)] : 0;
                 const q2 = list.length > 0 ? list[Math.floor(list.length * 0.50)] : 0;
@@ -1713,7 +1741,7 @@
                         <div>Wave Reached Quartiles: Q1 (25%): <span style="color: #ffc107;">Wave ${best.q1}</span> | Median (50%): <span style="color: #ffc107;">Wave ${best.q2}</span> | Q3 (75%): <span style="color: #ffc107;">Wave ${best.q3}</span></div>
                     </div>
                 `;
-                
+
                 const resetWave = waves.findIndex(w => w.redRisk > 60);
                 let riskMsg = "";
                 if (resetWave >= 0) {
@@ -1738,4 +1766,5 @@
         }
     </script>
 </body>
+
 </html>
