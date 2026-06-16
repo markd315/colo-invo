@@ -492,9 +492,9 @@
                 } else if (mod.group === "Blasphemy") {
                     defaults[idx] = "green";
                 } else if (mod.name === "Quartet") {
-                    defaults[idx] = "yellow";
-                } else if (mod.name === "Totemic") {
                     defaults[idx] = "red";
+                } else if (mod.name === "Totemic") {
+                    defaults[idx] = "yellow";
                 } else if (mod.name === "Doom II") {
                     defaults[idx] = "yellow";
                 } else if (mod.name === "Doom III") {
@@ -1334,7 +1334,6 @@
                     }
                 });
             };
-            };
         `;
 
         let activeWorkers = [];
@@ -1352,7 +1351,7 @@
             const deathYellow2 = parseFloat(document.getElementById('deathYellow2').value) || 0;
             const cofferDiscount = parseFloat(document.getElementById('cofferDiscount').value) || 0;
             const supplyCost = parseFloat(document.getElementById('supplyCost').value) || 0;
-            const deathFee = 500000 * (cofferDiscount / 100);
+            const deathFee = 500000 * (1 - cofferDiscount / 100);
             
             let greenCount = Object.values(state.classification).filter(c => c === 'green').length;
             let yellowCount = Object.values(state.classification).filter(c => c === 'yellow').length;
@@ -1601,25 +1600,17 @@
             updateCalculations();
         });
 
-        // Update UI statistics and trigger chart render
-        function updateUIWithResults(waves) {
-            const w12Data = waves.find(w => w.num === 12);
-            if (w12Data) {
-                document.getElementById('waveReset').innerHTML = 
-                    `<span style="color: #ffc107;">${w12Data.yellowRisk}%</span> / <span style="color: #f44336;">${w12Data.redRisk}%</span>`;
-            } else {
-                document.getElementById('waveReset').textContent = "-";
-            }
+        // Profit inputs change listeners
+        document.getElementById('deathGreen').addEventListener('input', updateCalculations);
+        document.getElementById('deathYellow1').addEventListener('input', updateCalculations);
+        document.getElementById('deathYellow2').addEventListener('input', updateCalculations);
+        document.getElementById('cofferDiscount').addEventListener('input', updateCalculations);
+        document.getElementById('supplyCost').addEventListener('input', updateCalculations);
 
-            const resetWave = waves.findIndex(w => w.redRisk > 60);
-            if (resetWave >= 0) {
-                document.getElementById('waveInfo').textContent = `High risk of run failure (>60%) starting at Wave ${waves[resetWave].num}.`;
-            } else {
-                document.getElementById('waveInfo').textContent = "";
-            }
-
-            renderOrUpdateChart(waves);
-        }
+        // Initialize
+        initModifiers();
+        renderModifiers();
+        updateCalculations();
 
         // Profit UI updating and quartile calculation
         function updateProfitUI(profitStatsList, totalSimRuns, waves) {
@@ -1680,8 +1671,8 @@
                     q1, q2, q3
                 };
 
-                if (avgProfit > maxProfit) {
-                    maxProfit = avgProfit;
+                if (profitPerWave > maxProfit) {
+                    maxProfit = profitPerWave;
                     bestStrategy = k;
                 }
 
@@ -1706,7 +1697,7 @@
                         Recommended Strategy: ${labels[bestStrategy]}
                     </div>
                     <div style="font-size: 13px; color: var(--text-secondary, #999); line-height: 1.4;">
-                        Based on your death risks and settings, resetting on <strong>${labels[bestStrategy].toLowerCase()}</strong> yields the highest expected profit of <strong>${formatGP(results[bestStrategy].avgProfit)}</strong> per run.
+                        Based on your death risks and settings, resetting on <strong>${labels[bestStrategy].toLowerCase()}</strong> yields the highest expected profit of <strong>${formatGP(results[bestStrategy].profitPerWave)}</strong> per wave (with an average total profit of <strong>${formatGP(results[bestStrategy].avgProfit)}</strong> per run).
                     </div>
                 `;
                 recBox.innerHTML = recHtml;
