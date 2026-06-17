@@ -421,6 +421,28 @@
                 </div>
             </div>
 
+        <!-- Live Draft Optimizer -->
+        <div class="card" style="margin-top: 20px;">
+            <details id="draftOptimizerDetails"
+                style="cursor: pointer; background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333);">
+                <summary style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0; outline: none;">
+                    Live Draft Optimizer <span id="optWaveText"
+                        style="font-size: 0.9rem; color: var(--text-secondary, #999); font-weight: normal;">(Wave
+                        1)</span>
+                </summary>
+                <div style="margin-top: 15px;">
+                    <p style="font-size: 13px; color: var(--text-secondary, #999); margin-bottom: 10px;">
+                        The engine's ranked priority list for all valid, non-banned modifiers on the current wave.
+                        Higher score = better.
+                    </p>
+                    <div id="optList"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </details>
+        </div>
+
             <div class="card" style="margin-top: 20px;">
                 <h2>Statistics</h2>
                 <div class="stats-grid">
@@ -521,23 +543,6 @@
             </div>
         </div>
 
-        <!-- Live Draft Optimizer -->
-        <div class="card fullwidth" style="margin-top: 20px;">
-            <details id="draftOptimizerDetails" style="cursor: pointer; background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333);">
-                <summary style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0; outline: none;">
-                    Live Draft Optimizer <span id="optWaveText" style="font-size: 0.9rem; color: var(--text-secondary, #999); font-weight: normal;">(Wave 1)</span>
-                </summary>
-                <div style="margin-top: 15px;">
-                    <p style="font-size: 13px; color: var(--text-secondary, #999); margin-bottom: 10px;">
-                        The engine's ranked priority list for all valid, non-banned modifiers on the current wave. Higher score = better.
-                    </p>
-                    <div id="optList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        <!-- Filled dynamically -->
-                    </div>
-                </div>
-            </details>
-        </div>
-
         <!-- OSRS Wiki Live Wave Rewards -->
         <div class="card fullwidth" style="margin-top: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -546,7 +551,8 @@
                     style="font-size: 12px; color: var(--text-secondary, #999); display: flex; align-items: center; gap: 6px;">
                     <span id="scrapeStatusIndicator" class="status-indicator"
                         style="width: 8px; height: 8px; border-radius: 50%; background-color: #4caf50; display: inline-block;"></span>
-                    <span id="scrapeStatusText"><!-- LAST_UPDATED_AT -->Last updated: 2026-06-17 15:58:22 UTC<!-- /LAST_UPDATED_AT --></span>
+                    <span id="scrapeStatusText"><!-- LAST_UPDATED_AT -->Last updated: 2026-06-17 15:58:22
+                        UTC<!-- /LAST_UPDATED_AT --></span>
                 </div>
             </div>
             <div id="scrapedGEValues"
@@ -608,6 +614,8 @@
             { name: "Doom III", img: "https://tiermaker.com/images/media/template_images/2024/17009265/osrs-colosseum-invocations-17009265/zzzzz-1713140027fortiscolosseum-doomiii-1.png", defaultClass: "red", group: "Doom", tier: 3 }
         ];
 
+        modifiers.forEach((m, i) => m.idx = i);
+
         function getDefaultW12Overrides() {
             const defaults = {};
             modifiers.forEach((mod, idx) => {
@@ -647,7 +655,7 @@
             chart: null,
             renderOrder: [],
             w12Overrides: getDefaultW12Overrides(),
-            waveRewards: /* WIKI_REWARDS_START */ [29200, 45485.86, 53246.77, 79986.4, 152602.87, 156906.11, 213553.46, 232233.25, 391328.56, 482448.77, 719409.89, 1266665.27] /* WIKI_REWARDS_END */
+            waveRewards: /* WIKI_REWARDS_START */[29200, 45485.86, 53246.77, 79986.4, 152602.87, 156906.11, 213553.46, 232233.25, 391328.56, 482448.77, 719409.89, 1266665.27] /* WIKI_REWARDS_END */
         };
 
         // Initialize modifier classification
@@ -877,15 +885,15 @@
 
             function getWorstCaseClass(mod, earliestWave) {
                 if (earliestWave > mWave) return 'none';
-                
+
                 let worstClass = 'green';
                 let couldBeOffered = false;
                 for (let w = earliestWave; w <= mWave; w++) {
                     if (w < 7 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo")) continue;
                     if (w === 12 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo" || mod.group === "Manti-mayhem" || mod.group === "Myopia" || mod.group === "Reentry")) continue;
-                    
+
                     couldBeOffered = true;
-                    
+
                     let waveClass = cls[mod.idx] || 'unselected';
                     if (w === 12 && overrides && overrides[mod.idx] !== undefined) {
                         waveClass = overrides[mod.idx];
@@ -927,21 +935,21 @@
                 const nextTierClass = nextTierMod ? getWorstCaseClass(nextTierMod, cWave + 1) : 'none';
                 const t3Class = t3Mod ? getWorstCaseClass(t3Mod, cWave + 2) : 'none';
 
-                let score = 10000;
-                
-                if (currentClass === 'red') score -= 4000;
-                else if (currentClass === 'yellow') score -= 400;
+                let score = 100000;
 
-                if (nextTierClass === 'red') score -= 3000;
-                else if (nextTierClass === 'yellow') score -= 300;
+                if (currentClass === 'red') score -= 400000;
+                else if (currentClass === 'yellow') score -= 1000;
+
+                if (nextTierClass === 'red') score -= 300000;
+                else if (nextTierClass === 'yellow') score -= 200;
 
                 if (mod.tier === 1 && nextTierClass !== 'none') {
-                    if (t3Class === 'red') score -= 2000;
-                    else if (t3Class === 'yellow') score -= 200;
+                    if (t3Class === 'red') score -= 200000;
+                    else if (t3Class === 'yellow') score -= 100;
                 }
 
-                if (mod.tier === 1) score += 2;
-                else if (mod.tier === 2) score += 1;
+                if (mod.tier === 1) score += 50000;
+                else if (mod.tier === 2) score += 25000;
 
                 score += rand() * 0.0001;
 
@@ -1070,21 +1078,21 @@
                     const nextTierClass = nextTierMod ? getWorstCaseClass(nextTierMod, cWave + 1) : 'none';
                     const t3Class = t3Mod ? getWorstCaseClass(t3Mod, cWave + 2) : 'none';
 
-                    let score = 10000;
+                    let score = 100000;
                     
-                    if (currentClass === 'red') score -= 4000;
-                    else if (currentClass === 'yellow') score -= 400;
+                    if (currentClass === 'red') score -= 400000;
+                    else if (currentClass === 'yellow') score -= 1000;
 
-                    if (nextTierClass === 'red') score -= 3000;
-                    else if (nextTierClass === 'yellow') score -= 300;
+                    if (nextTierClass === 'red') score -= 300000;
+                    else if (nextTierClass === 'yellow') score -= 200;
 
                     if (mod.tier === 1 && nextTierClass !== 'none') {
-                        if (t3Class === 'red') score -= 2000;
-                        else if (t3Class === 'yellow') score -= 200;
+                        if (t3Class === 'red') score -= 200000;
+                        else if (t3Class === 'yellow') score -= 100;
                     }
 
-                    if (mod.tier === 1) score += 2;
-                    else if (mod.tier === 2) score += 1;
+                    if (mod.tier === 1) score += 50000;
+                    else if (mod.tier === 2) score += 25000;
 
                     score += rand() * 0.0001;
 
@@ -1464,7 +1472,7 @@
         // Calculate risks asynchronously using Web Workers
         function calculateRisksAsync() {
             renderDraftOptimizer();
-            
+
             activeWorkers.forEach(w => w.terminate());
             activeWorkers = [];
 
@@ -1583,9 +1591,9 @@
             const w = activeIndices.size + 1;
             const optWaveText = document.getElementById('optWaveText');
             const optList = document.getElementById('optList');
-            
+
             if (!optWaveText || !optList) return;
-            
+
             optWaveText.textContent = `(Wave ${w})`;
 
             if (w > 12) {
@@ -1621,7 +1629,7 @@
             const reentryGreenW11 = document.getElementById('reentryGreenW11') ? document.getElementById('reentryGreenW11').checked : false;
             const reentry2 = modifiers.find(m => m.name === "Reentry II");
             const reentry2Idx = reentry2 ? reentry2.idx : -1;
-            
+
             // Assume targeting Sol for optimization math
             const rankedChoices = chooseBestModifier(availableChoices, activeIndices, groupTiers, state.classification, modifiers, Math.random, w, 12, state.w12Overrides, reentryGreenW11, reentry2Idx, true);
 
@@ -1633,19 +1641,19 @@
 
             rankedChoices.forEach(choice => {
                 const mod = choice.mod;
-                const cls = (w === 12 && state.w12Overrides && state.w12Overrides[mod.idx] !== undefined) 
-                    ? state.w12Overrides[mod.idx] 
+                const cls = (w === 12 && state.w12Overrides && state.w12Overrides[mod.idx] !== undefined)
+                    ? state.w12Overrides[mod.idx]
                     : (state.classification[mod.idx] || 'unselected');
-                
+
                 let colorHex = '#666';
                 if (cls === 'green') colorHex = '#4caf50';
                 if (cls === 'yellow') colorHex = '#ffeb3b';
                 if (cls === 'red') colorHex = '#f44336';
-                
+
                 const scoreDisplay = Math.floor(choice.score);
 
                 const item = document.createElement('div');
-                item.style = `background: var(--bg-primary, #151a28); border: 1px solid ${colorHex}; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px;`;
+                item.style = `background: var(--bg-primary, #151a28); border: 1px solid ${colorHex}; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px; cursor: pointer;`;
                 item.innerHTML = `
                     <img src="${mod.img}" style="width: 30px; height: 30px; object-fit: contain;">
                     <div style="flex: 1;">
@@ -1653,6 +1661,11 @@
                         <div style="font-size: 11px; color: var(--text-secondary, #999);">Score: ${scoreDisplay}</div>
                     </div>
                 `;
+                item.addEventListener('click', () => {
+                    state.purple[mod.idx] = true;
+                    renderModifiers();
+                    updateCalculations();
+                });
                 optList.appendChild(item);
             });
         }
@@ -1687,8 +1700,8 @@
 
             if (state.chart) {
                 state.chart.data.labels = waveLabels;
-                state.chart.data.datasets[0].data = yellowData;
-                state.chart.data.datasets[1].data = redData;
+                state.chart.data.datasets[0].data = redData;
+                state.chart.data.datasets[1].data = yellowData;
                 state.chart.update();
             } else {
                 state.chart = new Chart(ctx, {
@@ -1696,17 +1709,6 @@
                     data: {
                         labels: waveLabels,
                         datasets: [
-                            {
-                                label: 'Yellow Risk %',
-                                data: yellowData,
-                                borderColor: '#ffc107',
-                                backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                                borderWidth: 2,
-                                fill: true,
-                                tension: 0.3,
-                                pointBackgroundColor: '#ffc107',
-                                pointRadius: 4
-                            },
                             {
                                 label: 'Red Risk %',
                                 data: redData,
@@ -1716,6 +1718,17 @@
                                 fill: true,
                                 tension: 0.3,
                                 pointBackgroundColor: '#f44336',
+                                pointRadius: 4
+                            },
+                            {
+                                label: 'Yellow Risk %',
+                                data: yellowData,
+                                borderColor: '#ffc107',
+                                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3,
+                                pointBackgroundColor: '#ffc107',
                                 pointRadius: 4
                             }
                         ]
