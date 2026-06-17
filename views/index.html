@@ -108,6 +108,12 @@
             padding-right: 5px;
         }
 
+        @media (min-width: 768px) {
+            .modifier-grid {
+                max-height: 780px;
+            }
+        }
+
         .modifier-tile {
             cursor: pointer;
             border-radius: 8px;
@@ -302,7 +308,7 @@
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
-        
+
         .scraped-value-tile {
             background: var(--bg-tertiary, #1f2638);
             border: 1px solid var(--border-color, #333);
@@ -320,13 +326,30 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
         }
 
         .status-pulse {
             animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .footer-link {
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: #81c784 !important;
+            text-decoration: underline !important;
         }
     </style>
 </head>
@@ -447,6 +470,11 @@
                         style="max-width: 90px; height: 32px; padding: 4px 8px;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; color: var(--text-secondary, #999);">Sol Success %:</label>
+                    <input type="number" id="solSuccess" class="form-control" value="75" min="0" max="100"
+                        style="max-width: 90px; height: 32px; padding: 4px 8px;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
                     <label style="font-size: 12px; color: var(--text-secondary, #999);">Coffer Discount %:</label>
                     <input type="number" id="cofferDiscount" class="form-control" value="50" min="0" max="100"
                         style="max-width: 90px; height: 32px; padding: 4px 8px;">
@@ -493,19 +521,51 @@
             </div>
         </div>
 
+        <!-- Live Draft Optimizer -->
+        <div class="card fullwidth" style="margin-top: 20px;">
+            <details id="draftOptimizerDetails" style="cursor: pointer; background: var(--bg-tertiary, #1f2638); padding: 15px; border-radius: 6px; border: 1px solid var(--border-color, #333);">
+                <summary style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0; outline: none;">
+                    Live Draft Optimizer <span id="optWaveText" style="font-size: 0.9rem; color: var(--text-secondary, #999); font-weight: normal;">(Wave 1)</span>
+                </summary>
+                <div style="margin-top: 15px;">
+                    <p style="font-size: 13px; color: var(--text-secondary, #999); margin-bottom: 10px;">
+                        The engine's ranked priority list for all valid, non-banned modifiers on the current wave. Higher score = better.
+                    </p>
+                    <div id="optList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </details>
+        </div>
+
         <!-- OSRS Wiki Live Wave Rewards -->
         <div class="card fullwidth" style="margin-top: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="margin-bottom: 0;">OSRS Wiki Live Wave Rewards</h2>
-                <div id="scrapeStatus" style="font-size: 12px; color: var(--text-secondary, #999); display: flex; align-items: center; gap: 6px;">
-                    <span id="scrapeStatusIndicator" class="status-indicator status-pulse" style="width: 8px; height: 8px; border-radius: 50%; background-color: #ffc107; display: inline-block;"></span>
-                    <span id="scrapeStatusText">Loading live values...</span>
+                <div id="scrapeStatus"
+                    style="font-size: 12px; color: var(--text-secondary, #999); display: flex; align-items: center; gap: 6px;">
+                    <span id="scrapeStatusIndicator" class="status-indicator"
+                        style="width: 8px; height: 8px; border-radius: 50%; background-color: #4caf50; display: inline-block;"></span>
+                    <span id="scrapeStatusText"><!-- LAST_UPDATED_AT -->Last updated: 2026-06-17 15:58:22 UTC<!-- /LAST_UPDATED_AT --></span>
                 </div>
             </div>
-            <div id="scrapedGEValues" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; overflow-x: auto; padding: 5px 0;">
+            <div id="scrapedGEValues"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; overflow-x: auto; padding: 5px 0;">
                 <!-- Filled dynamically -->
             </div>
         </div>
+
+        <!-- Footer -->
+        <footer
+            style="grid-column: 1 / -1; margin-top: 40px; padding: 20px 0; border-top: 1px solid var(--border-color, #333); text-align: center; font-size: 12px; color: var(--text-secondary, #999); line-height: 1.6;">
+            <p style="margin-bottom: 6px;">Property of Zanzalaz15, 2026. All images are property of Jagex.</p>
+            <p style="margin-bottom: 6px;"><a href="https://osrs.dev/" target="_blank"
+                    style="color: #4caf50; text-decoration: none; font-weight: 500;" class="footer-link">Special thanks
+                    to WillZero for helping with calibrations</a>.</p>
+            <p>Also check out the <a href="https://blockforger.net/pages/moons-of-peril/index.html" target="_blank"
+                    style="color: #4caf50; text-decoration: none; font-weight: 500;" class="footer-link">Moon of Peril
+                    calculator</a>.</p>
+        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
@@ -587,7 +647,7 @@
             chart: null,
             renderOrder: [],
             w12Overrides: getDefaultW12Overrides(),
-            waveRewards: [29280, 45472.43, 53226.66, 79739.6, 152267.59, 156533.64, 211858.1, 230164.52, 388921.39, 478855.2, 713654.63, 1255154.42]
+            waveRewards: /* WIKI_REWARDS_START */ [29200, 45485.86, 53246.77, 79986.4, 152602.87, 156906.11, 213553.46, 232233.25, 391328.56, 482448.77, 719409.89, 1266665.27] /* WIKI_REWARDS_END */
         };
 
         // Initialize modifier classification
@@ -803,118 +863,101 @@
         }
 
         // Choose best modifier from choices array based on optimal strategy
-        function chooseBestModifier(choices, activeIndices, groupTiers) {
-            if (choices.length === 0) return -1;
+        function chooseBestModifier(choices, activeIndices, groupTiers, classificationParam, modifiersParam, randomFn, currentWave, maxWave, overrides, reentryGreenW11, reentry2Idx, returnAllScores) {
+            if (choices.length === 0) return returnAllScores ? [] : -1;
 
             let bestMod = null;
-            let bestScore = -1;
+            let bestScore = -100000;
 
-            choices.forEach((mod) => {
-                if (!mod) return;
+            const cls = classificationParam || state.classification;
+            const mods = modifiersParam || modifiers;
+            const rand = randomFn || Math.random;
+            const cWave = currentWave || 1;
+            const mWave = maxWave || 12;
 
-                const classification = state.classification[mod.idx];
+            function getWorstCaseClass(mod, earliestWave) {
+                if (earliestWave > mWave) return 'none';
+                
+                let worstClass = 'green';
+                let couldBeOffered = false;
+                for (let w = earliestWave; w <= mWave; w++) {
+                    if (w < 7 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo")) continue;
+                    if (w === 12 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo" || mod.group === "Manti-mayhem" || mod.group === "Myopia" || mod.group === "Reentry")) continue;
+                    
+                    couldBeOffered = true;
+                    
+                    let waveClass = cls[mod.idx] || 'unselected';
+                    if (w === 12 && overrides && overrides[mod.idx] !== undefined) {
+                        waveClass = overrides[mod.idx];
+                    }
+                    if (w === 11 && reentryGreenW11 && mod.idx === reentry2Idx) {
+                        waveClass = 'green';
+                    }
+                    if (waveClass === 'red') {
+                        worstClass = 'red';
+                        break;
+                    } else if (waveClass === 'yellow' && worstClass !== 'red') {
+                        worstClass = 'yellow';
+                    }
+                }
+                if (!couldBeOffered) return 'none';
+                return worstClass;
+            }
 
-                // Check classification of the next tier in this group
-                let nextTierClass = 'none';
-                modifiers.forEach((m) => {
-                    if (m.group === mod.group && m.tier === mod.tier + 1) {
-                        nextTierClass = state.classification[m.idx] || 'unselected';
+            const scoredChoices = choices.map((mod) => {
+                if (!mod) return { mod: null, score: -100000 };
+
+                let currentClass = cls[mod.idx] || 'unselected';
+                if (cWave === 12 && overrides && overrides[mod.idx] !== undefined) {
+                    currentClass = overrides[mod.idx];
+                }
+                if (cWave === 11 && reentryGreenW11 && mod.idx === reentry2Idx) {
+                    currentClass = 'green';
+                }
+
+                let nextTierMod = null;
+                let t3Mod = null;
+                mods.forEach((m) => {
+                    if (m.group === mod.group) {
+                        if (m.tier === mod.tier + 1) nextTierMod = m;
+                        if (m.tier === 3) t3Mod = m;
                     }
                 });
 
-                // Count contiguous future green upgrades starting from next tier (tier 2)
-                let futureGreens = 0;
-                if (mod.tier === 1) {
-                    let t2Green = false;
-                    let t3Green = false;
-                    modifiers.forEach((m) => {
-                        if (m.group === mod.group) {
-                            if (m.tier === 2 && state.classification[m.idx] === 'green') {
-                                t2Green = true;
-                            }
-                            if (m.tier === 3 && state.classification[m.idx] === 'green') {
-                                t3Green = true;
-                            }
-                        }
-                    });
-                    if (t2Green) {
-                        futureGreens = 1;
-                        if (t3Green) {
-                            futureGreens = 2;
-                        }
-                    }
+                const nextTierClass = nextTierMod ? getWorstCaseClass(nextTierMod, cWave + 1) : 'none';
+                const t3Class = t3Mod ? getWorstCaseClass(t3Mod, cWave + 2) : 'none';
+
+                let score = 10000;
+                
+                if (currentClass === 'red') score -= 4000;
+                else if (currentClass === 'yellow') score -= 400;
+
+                if (nextTierClass === 'red') score -= 3000;
+                else if (nextTierClass === 'yellow') score -= 300;
+
+                if (mod.tier === 1 && nextTierClass !== 'none') {
+                    if (t3Class === 'red') score -= 2000;
+                    else if (t3Class === 'yellow') score -= 200;
                 }
 
-                // Check if there are any remaining upgrade tiers that are Green
-                let hasGreenUpgrade = false;
-                modifiers.forEach((m) => {
-                    if (m.group === mod.group && m.tier > mod.tier) {
-                        if (state.classification[m.idx] === 'green') {
-                            hasGreenUpgrade = true;
-                        }
-                    }
-                });
+                if (mod.tier === 1) score += 2;
+                else if (mod.tier === 2) score += 1;
 
-                let score = 0;
-                if (classification === 'green') {
-                    // Green modifiers: Tier 1 with future greens (sorted by count) > Tier 2 > Tier 3 > Tier 1 with 0 future greens
-                    if (mod.tier === 1) {
-                        if (futureGreens === 2) score = 8.0;
-                        else if (futureGreens === 1) score = 5.5;
-                        else score = 5.0;
-                    } else if (mod.tier === 2) {
-                        score = 7.0;
-                    } else { // tier 3
-                        score = 6.0;
-                    }
+                score += rand() * 0.0001;
 
-                    // Penalty for unlocking worse tiers
-                    if (nextTierClass === 'red') {
-                        score -= 1.5;
-                    } else if (nextTierClass === 'yellow') {
-                        score -= 0.5;
-                    }
-                } else if (classification === 'yellow') {
-                    // Yellow modifiers: Tier 3 gets 4.0, Tier 2 gets 3.5, Tier 1 gets 3.0
-                    if (mod.tier === 3) score = 4.0;
-                    else if (mod.tier === 2) score = 3.5;
-                    else score = 3.0;
+                return { mod, score };
+            });
 
-                    // Bonus if it unlocks a green upgrade path
-                    if (hasGreenUpgrade) {
-                        score += 1.0;
-                    }
-
-                    // Penalty for unlocking red
-                    if (nextTierClass === 'red') {
-                        score -= 1.5;
-                    }
-                } else {
-                    // Red modifiers: Tier 3 gets 2.0, Tier 2 gets 1.5, Tier 1 gets 1.0
-                    if (mod.tier === 3) score = 2.0;
-                    else if (mod.tier === 2) score = 1.5;
-                    else score = 1.0;
-
-                    // Bonus if it unlocks a green upgrade path
-                    if (hasGreenUpgrade) {
-                        score += 1.0;
-                    }
-                }
-
-                // Tie-breaker: prefer upgrades to previously picked modifiers
-                const isUpgrade = mod.tier > 1;
-                if (isUpgrade) {
-                    score += 0.1;
-                }
-
-                // Small random jitter to break remaining ties randomly
-                score += Math.random() * 0.0001;
-
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMod = mod;
+            scoredChoices.forEach(c => {
+                if (c.score > bestScore) {
+                    bestScore = c.score;
+                    bestMod = c.mod;
                 }
             });
+
+            if (returnAllScores) {
+                return scoredChoices.sort((a, b) => b.score - a.score);
+            }
 
             return bestMod ? bestMod.idx : -1;
         }
@@ -963,111 +1006,87 @@
                 return drawn;
             }
 
-            function chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random) {
+            function chooseBestModifier(choices, activeIndices, groupTiers, classificationParam, modifiersParam, randomFn, currentWave, maxWave, overrides, reentryGreenW11, reentry2Idx) {
                 if (choices.length === 0) return -1;
 
                 let bestMod = null;
-                let bestScore = -1;
+                let bestScore = -100000;
+
+                const cls = classificationParam;
+                const mods = modifiersParam;
+                const rand = randomFn;
+                const cWave = currentWave || 1;
+                const mWave = maxWave || 12;
+
+                function getWorstCaseClass(mod, earliestWave) {
+                    if (earliestWave > mWave) return 'none';
+                    
+                    let worstClass = 'green';
+                    let couldBeOffered = false;
+                    for (let w = earliestWave; w <= mWave; w++) {
+                        if (w < 7 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo")) continue;
+                        if (w === 12 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo" || mod.group === "Manti-mayhem" || mod.group === "Myopia" || mod.group === "Reentry")) continue;
+                        
+                        couldBeOffered = true;
+                        
+                        let waveClass = cls[mod.idx] || 'unselected';
+                        if (w === 12 && overrides && overrides[mod.idx] !== undefined) {
+                            waveClass = overrides[mod.idx];
+                        }
+                        if (w === 11 && reentryGreenW11 && mod.idx === reentry2Idx) {
+                            waveClass = 'green';
+                        }
+                        if (waveClass === 'red') {
+                            worstClass = 'red';
+                            break;
+                        } else if (waveClass === 'yellow' && worstClass !== 'red') {
+                            worstClass = 'yellow';
+                        }
+                    }
+                    if (!couldBeOffered) return 'none';
+                    return worstClass;
+                }
 
                 choices.forEach((mod) => {
                     if (!mod) return;
 
-                    const cl = classification[mod.idx] || 'unselected';
+                    let currentClass = cls[mod.idx] || 'unselected';
+                    if (cWave === 12 && overrides && overrides[mod.idx] !== undefined) {
+                        currentClass = overrides[mod.idx];
+                    }
+                    if (cWave === 11 && reentryGreenW11 && mod.idx === reentry2Idx) {
+                        currentClass = 'green';
+                    }
 
-                    // Check classification of the next tier in this group
-                    let nextTierClass = 'none';
-                    modifiers.forEach((m) => {
-                        if (m.group === mod.group && m.tier === mod.tier + 1) {
-                            nextTierClass = classification[m.idx] || 'unselected';
+                    let nextTierMod = null;
+                    let t3Mod = null;
+                    mods.forEach((m) => {
+                        if (m.group === mod.group) {
+                            if (m.tier === mod.tier + 1) nextTierMod = m;
+                            if (m.tier === 3) t3Mod = m;
                         }
                     });
 
-                    // Count contiguous future green upgrades starting from next tier (tier 2)
-                    let futureGreens = 0;
-                    if (mod.tier === 1) {
-                        let t2Green = false;
-                        let t3Green = false;
-                        modifiers.forEach((m) => {
-                            if (m.group === mod.group) {
-                                if (m.tier === 2 && classification[m.idx] === 'green') {
-                                    t2Green = true;
-                                }
-                                if (m.tier === 3 && classification[m.idx] === 'green') {
-                                    t3Green = true;
-                                }
-                            }
-                        });
-                        if (t2Green) {
-                            futureGreens = 1;
-                            if (t3Green) {
-                                futureGreens = 2;
-                            }
-                        }
+                    const nextTierClass = nextTierMod ? getWorstCaseClass(nextTierMod, cWave + 1) : 'none';
+                    const t3Class = t3Mod ? getWorstCaseClass(t3Mod, cWave + 2) : 'none';
+
+                    let score = 10000;
+                    
+                    if (currentClass === 'red') score -= 4000;
+                    else if (currentClass === 'yellow') score -= 400;
+
+                    if (nextTierClass === 'red') score -= 3000;
+                    else if (nextTierClass === 'yellow') score -= 300;
+
+                    if (mod.tier === 1 && nextTierClass !== 'none') {
+                        if (t3Class === 'red') score -= 2000;
+                        else if (t3Class === 'yellow') score -= 200;
                     }
 
-                    // Check if there are any remaining upgrade tiers that are Green
-                    let hasGreenUpgrade = false;
-                    modifiers.forEach((m) => {
-                        if (m.group === mod.group && m.tier > mod.tier) {
-                            if (classification[m.idx] === 'green') {
-                                hasGreenUpgrade = true;
-                            }
-                        }
-                    });
+                    if (mod.tier === 1) score += 2;
+                    else if (mod.tier === 2) score += 1;
 
-                    let score = 0;
-                    if (cl === 'green') {
-                        // Green modifiers: Tier 1 with future greens (sorted by count) > Tier 2 > Tier 3 > Tier 1 with 0 future greens
-                        if (mod.tier === 1) {
-                            if (futureGreens === 2) score = 8.0;
-                            else if (futureGreens === 1) score = 5.5;
-                            else score = 5.0;
-                        } else if (mod.tier === 2) {
-                            score = 7.0;
-                        } else { // tier 3
-                            score = 6.0;
-                        }
-
-                        // Penalty for unlocking worse tiers
-                        if (nextTierClass === 'red') {
-                            score -= 1.5;
-                        } else if (nextTierClass === 'yellow') {
-                            score -= 0.5;
-                        }
-                    } else if (cl === 'yellow') {
-                        // Yellow modifiers: Tier 3 gets 4.0, Tier 2 gets 3.5, Tier 1 gets 3.0
-                        if (mod.tier === 3) score = 4.0;
-                        else if (mod.tier === 2) score = 3.5;
-                        else score = 3.0;
-
-                        // Bonus if it unlocks a green upgrade path
-                        if (hasGreenUpgrade) {
-                            score += 1.0;
-                        }
-                        
-                        // Penalty for unlocking red
-                        if (nextTierClass === 'red') {
-                            score -= 1.5;
-                        }
-                    } else {
-                        // Red modifiers: Tier 3 gets 2.0, Tier 2 gets 1.5, Tier 1 gets 1.0
-                        if (mod.tier === 3) score = 2.0;
-                        else if (mod.tier === 2) score = 1.5;
-                        else score = 1.0;
-
-                        // Bonus if it unlocks a green upgrade path
-                        if (hasGreenUpgrade) {
-                            score += 1.0;
-                        }
-                    }
-
-                    // Tie-breaker: prefer upgrades to previously picked modifiers
-                    const isUpgrade = mod.tier > 1;
-                    if (isUpgrade) {
-                        score += 0.1;
-                    }
-
-                    score += random() * 0.0001;
+                    score += rand() * 0.0001;
 
                     if (score > bestScore) {
                         bestScore = score;
@@ -1078,8 +1097,8 @@
                 return bestMod ? bestMod.idx : -1;
             }
 
-            self.onmessage = function(e) {
-                const { modifiers, classification, purpleIndices, poolMult, simRuns, reentryGreenW11, w12Overrides, deathGreen, deathYellow1, deathYellow2, deathFee, supplyCost, waveRewards } = e.data;
+             self.onmessage = function(e) {
+                const { modifiers, classification, purpleIndices, poolMult, simRuns, reentryGreenW11, w12Overrides, deathGreen, deathYellow1, deathYellow2, deathFee, supplyCost, waveRewards, solSuccess } = e.data;
 
                 const blasphemy1 = modifiers.find(m => m.name === "Blasphemy I");
                 const relentless1 = modifiers.find(m => m.name === "Relentless I");
@@ -1104,11 +1123,18 @@
                 const pYellow1 = (deathYellow1 || 0) / 100;
                 const pYellow2 = (deathYellow2 || 0) / 100;
 
-                const strategies = ['reset_red', 'reset_2_yellows', 'reset_any_yellow'];
+                const strategies = [
+                    'reset_red_claim', 'reset_red_sol',
+                    'reset_2_yellows_claim', 'reset_2_yellows_sol',
+                    'reset_any_yellow_claim', 'reset_any_yellow_sol'
+                ];
                 const stats = {
-                    reset_red: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
-                    reset_2_yellows: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
-                    reset_any_yellow: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] }
+                    reset_red_claim: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
+                    reset_red_sol: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
+                    reset_2_yellows_claim: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
+                    reset_2_yellows_sol: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
+                    reset_any_yellow_claim: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] },
+                    reset_any_yellow_sol: { totalWave: 0, totalProfit: 0, totalAttempts: 0, list: [] }
                 };
 
                 const startWave = purpleIndices.length + 1;
@@ -1160,7 +1186,7 @@
 
                             if (w === 1) {
                                 choices = [blasphemy1, relentless1, frailty1];
-                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random, w, typeof maxWave !== 'undefined' ? maxWave : 12, typeof w12Overrides !== 'undefined' ? w12Overrides : null, typeof reentryGreenW11 !== 'undefined' ? reentryGreenW11 : false, typeof reentry2Idx !== 'undefined' ? reentry2Idx : -1);
                             } else {
                                 const pool = [];
                                 modifiers.forEach((mod) => {
@@ -1182,7 +1208,7 @@
                                 });
 
                                 choices = drawWeightedWithoutReplacement(pool, 3, random);
-                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random, w, typeof maxWave !== 'undefined' ? maxWave : 12, typeof w12Overrides !== 'undefined' ? w12Overrides : null, typeof reentryGreenW11 !== 'undefined' ? reentryGreenW11 : false, typeof reentry2Idx !== 'undefined' ? reentry2Idx : -1);
                             }
 
                             if (chosenModIdx !== -1) {
@@ -1256,16 +1282,22 @@
                         let runIsDead = false;
                         let waveReached = startWave - 1;
 
-                        for (let w = startWave; w <= 12; w++) {
-                            if (strat === 'reset_any_yellow' && activeYellowCount >= 1) {
+                        const isSolAttempt = strat.endsWith('_sol');
+                        const baseStrat = strat.replace('_claim', '').replace('_sol', '');
+                        const maxWave = isSolAttempt ? 12 : 11;
+
+                        for (let w = startWave; w <= maxWave; w++) {
+                            if (baseStrat === 'reset_any_yellow' && activeYellowCount >= 1) {
                                 break;
                             }
-                            if (strat === 'reset_2_yellows' && activeYellowCount >= 2) {
+                            if (baseStrat === 'reset_2_yellows' && activeYellowCount >= 2) {
                                 break;
                             }
 
                             let pDeath = pGreen;
-                            if (activeYellowCount === 1) {
+                            if (w === 12) {
+                                pDeath = 1 - (solSuccess / 100);
+                            } else if (activeYellowCount === 1) {
                                 pDeath = pYellow1;
                             } else if (activeYellowCount >= 2) {
                                 pDeath = pYellow2;
@@ -1278,6 +1310,10 @@
                             }
 
                             waveReached = w;
+
+                            if (w === maxWave) {
+                                break;
+                            }
 
                             let chosenModIdx = -1;
                             let choices = [];
@@ -1299,7 +1335,7 @@
 
                             if (w === 1) {
                                 choices = [blasphemy1, relentless1, frailty1];
-                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random, w, typeof maxWave !== 'undefined' ? maxWave : 12, typeof w12Overrides !== 'undefined' ? w12Overrides : null, typeof reentryGreenW11 !== 'undefined' ? reentryGreenW11 : false, typeof reentry2Idx !== 'undefined' ? reentry2Idx : -1);
                             } else {
                                 const pool = [];
                                 modifiers.forEach((mod) => {
@@ -1321,7 +1357,7 @@
                                 });
 
                                 choices = drawWeightedWithoutReplacement(pool, 3, random);
-                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random);
+                                chosenModIdx = chooseBestModifier(choices, activeIndices, groupTiers, classification, modifiers, random, w, typeof maxWave !== 'undefined' ? maxWave : 12, w12Overrides);
                             }
 
                             if (appliedW12Overrides.length > 0) {
@@ -1382,23 +1418,41 @@
                     yellowRiskCount,
                     redRiskCount,
                     profitStats: {
-                        reset_red: {
-                            avgWave: stats.reset_red.totalWave / simRuns,
-                            avgProfit: stats.reset_red.totalProfit / simRuns,
-                            profitPerWave: stats.reset_red.totalAttempts !== 0 ? stats.reset_red.totalProfit / stats.reset_red.totalAttempts : 0,
-                            wavesReachedList: stats.reset_red.list
+                        reset_red_claim: {
+                            avgWave: stats.reset_red_claim.totalWave / simRuns,
+                            avgProfit: stats.reset_red_claim.totalProfit / simRuns,
+                            profitPerWave: stats.reset_red_claim.totalAttempts !== 0 ? stats.reset_red_claim.totalProfit / stats.reset_red_claim.totalAttempts : 0,
+                            wavesReachedList: stats.reset_red_claim.list
                         },
-                        reset_2_yellows: {
-                            avgWave: stats.reset_2_yellows.totalWave / simRuns,
-                            avgProfit: stats.reset_2_yellows.totalProfit / simRuns,
-                            profitPerWave: stats.reset_2_yellows.totalAttempts !== 0 ? stats.reset_2_yellows.totalProfit / stats.reset_2_yellows.totalAttempts : 0,
-                            wavesReachedList: stats.reset_2_yellows.list
+                        reset_red_sol: {
+                            avgWave: stats.reset_red_sol.totalWave / simRuns,
+                            avgProfit: stats.reset_red_sol.totalProfit / simRuns,
+                            profitPerWave: stats.reset_red_sol.totalAttempts !== 0 ? stats.reset_red_sol.totalProfit / stats.reset_red_sol.totalAttempts : 0,
+                            wavesReachedList: stats.reset_red_sol.list
                         },
-                        reset_any_yellow: {
-                            avgWave: stats.reset_any_yellow.totalWave / simRuns,
-                            avgProfit: stats.reset_any_yellow.totalProfit / simRuns,
-                            profitPerWave: stats.reset_any_yellow.totalAttempts !== 0 ? stats.reset_any_yellow.totalProfit / stats.reset_any_yellow.totalAttempts : 0,
-                            wavesReachedList: stats.reset_any_yellow.list
+                        reset_2_yellows_claim: {
+                            avgWave: stats.reset_2_yellows_claim.totalWave / simRuns,
+                            avgProfit: stats.reset_2_yellows_claim.totalProfit / simRuns,
+                            profitPerWave: stats.reset_2_yellows_claim.totalAttempts !== 0 ? stats.reset_2_yellows_claim.totalProfit / stats.reset_2_yellows_claim.totalAttempts : 0,
+                            wavesReachedList: stats.reset_2_yellows_claim.list
+                        },
+                        reset_2_yellows_sol: {
+                            avgWave: stats.reset_2_yellows_sol.totalWave / simRuns,
+                            avgProfit: stats.reset_2_yellows_sol.totalProfit / simRuns,
+                            profitPerWave: stats.reset_2_yellows_sol.totalAttempts !== 0 ? stats.reset_2_yellows_sol.totalProfit / stats.reset_2_yellows_sol.totalAttempts : 0,
+                            wavesReachedList: stats.reset_2_yellows_sol.list
+                        },
+                        reset_any_yellow_claim: {
+                            avgWave: stats.reset_any_yellow_claim.totalWave / simRuns,
+                            avgProfit: stats.reset_any_yellow_claim.totalProfit / simRuns,
+                            profitPerWave: stats.reset_any_yellow_claim.totalAttempts !== 0 ? stats.reset_any_yellow_claim.totalProfit / stats.reset_any_yellow_claim.totalAttempts : 0,
+                            wavesReachedList: stats.reset_any_yellow_claim.list
+                        },
+                        reset_any_yellow_sol: {
+                            avgWave: stats.reset_any_yellow_sol.totalWave / simRuns,
+                            avgProfit: stats.reset_any_yellow_sol.totalProfit / simRuns,
+                            profitPerWave: stats.reset_any_yellow_sol.totalAttempts !== 0 ? stats.reset_any_yellow_sol.totalProfit / stats.reset_any_yellow_sol.totalAttempts : 0,
+                            wavesReachedList: stats.reset_any_yellow_sol.list
                         }
                     }
                 });
@@ -1409,6 +1463,8 @@
 
         // Calculate risks asynchronously using Web Workers
         function calculateRisksAsync() {
+            renderDraftOptimizer();
+            
             activeWorkers.forEach(w => w.terminate());
             activeWorkers = [];
 
@@ -1420,6 +1476,7 @@
             const deathYellow2 = parseFloat(document.getElementById('deathYellow2').value) || 0;
             const cofferDiscount = parseFloat(document.getElementById('cofferDiscount').value) || 0;
             const supplyCost = parseFloat(document.getElementById('supplyCost').value) || 0;
+            const solSuccess = parseFloat(document.getElementById('solSuccess').value) || 0;
             const deathFee = 500000 * (1 - cofferDiscount / 100);
 
             let greenCount = Object.values(state.classification).filter(c => c === 'green').length;
@@ -1515,9 +1572,89 @@
                     deathYellow2,
                     deathFee,
                     supplyCost,
-                    waveRewards: state.waveRewards
+                    waveRewards: state.waveRewards,
+                    solSuccess
                 });
             }
+        }
+
+        function renderDraftOptimizer() {
+            const activeIndices = new Set(Object.keys(state.purple).filter(idx => state.purple[idx]).map(Number));
+            const w = activeIndices.size + 1;
+            const optWaveText = document.getElementById('optWaveText');
+            const optList = document.getElementById('optList');
+            
+            if (!optWaveText || !optList) return;
+            
+            optWaveText.textContent = `(Wave ${w})`;
+
+            if (w > 12) {
+                optList.innerHTML = '<div style="color: var(--text-secondary, #999);">Run complete. No more drafts.</div>';
+                return;
+            }
+
+            const availableChoices = [];
+            const groupTiers = {};
+            activeIndices.forEach(idx => {
+                const mod = modifiers[idx];
+                const currentMax = groupTiers[mod.group] || 0;
+                if (mod.tier > currentMax) groupTiers[mod.group] = mod.tier;
+            });
+
+            if (w === 1) {
+                availableChoices.push(modifiers.find(m => m.name === "Blasphemy I"));
+                availableChoices.push(modifiers.find(m => m.name === "Relentless I"));
+                availableChoices.push(modifiers.find(m => m.name === "Frailty I"));
+            } else {
+                modifiers.forEach((mod) => {
+                    if (activeIndices.has(mod.idx)) return;
+                    if (w < 7 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo")) return;
+                    if (w === 12 && (mod.name === "Red Flag" || mod.name === "Dynamic Duo" || mod.group === "Manti-mayhem" || mod.group === "Myopia" || mod.group === "Reentry")) return;
+
+                    const currentTier = groupTiers[mod.group] || 0;
+                    if (mod.tier === currentTier + 1) {
+                        availableChoices.push(mod);
+                    }
+                });
+            }
+
+            const reentryGreenW11 = document.getElementById('reentryGreenW11') ? document.getElementById('reentryGreenW11').checked : false;
+            const reentry2 = modifiers.find(m => m.name === "Reentry II");
+            const reentry2Idx = reentry2 ? reentry2.idx : -1;
+            
+            // Assume targeting Sol for optimization math
+            const rankedChoices = chooseBestModifier(availableChoices, activeIndices, groupTiers, state.classification, modifiers, Math.random, w, 12, state.w12Overrides, reentryGreenW11, reentry2Idx, true);
+
+            optList.innerHTML = '';
+            if (!rankedChoices || rankedChoices.length === 0) {
+                optList.innerHTML = '<div style="color: var(--text-secondary, #999);">No valid choices for this wave.</div>';
+                return;
+            }
+
+            rankedChoices.forEach(choice => {
+                const mod = choice.mod;
+                const cls = (w === 12 && state.w12Overrides && state.w12Overrides[mod.idx] !== undefined) 
+                    ? state.w12Overrides[mod.idx] 
+                    : (state.classification[mod.idx] || 'unselected');
+                
+                let colorHex = '#666';
+                if (cls === 'green') colorHex = '#4caf50';
+                if (cls === 'yellow') colorHex = '#ffeb3b';
+                if (cls === 'red') colorHex = '#f44336';
+                
+                const scoreDisplay = Math.floor(choice.score);
+
+                const item = document.createElement('div');
+                item.style = `background: var(--bg-primary, #151a28); border: 1px solid ${colorHex}; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px;`;
+                item.innerHTML = `
+                    <img src="${mod.img}" style="width: 30px; height: 30px; object-fit: contain;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; font-size: 13px; color: #fff;">${mod.name}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary, #999);">Score: ${scoreDisplay}</div>
+                    </div>
+                `;
+                optList.appendChild(item);
+            });
         }
 
         // Update UI statistics and trigger chart render
@@ -1669,13 +1806,12 @@
             }
             updateCalculations();
         });
-
-        // Profit inputs change listeners
         document.getElementById('deathGreen').addEventListener('input', updateCalculations);
         document.getElementById('deathYellow1').addEventListener('input', updateCalculations);
         document.getElementById('deathYellow2').addEventListener('input', updateCalculations);
         document.getElementById('cofferDiscount').addEventListener('input', updateCalculations);
         document.getElementById('supplyCost').addEventListener('input', updateCalculations);
+        document.getElementById('solSuccess').addEventListener('input', updateCalculations);
 
         function updateScrapedUI(values, source) {
             const container = document.getElementById('scrapedGEValues');
@@ -1686,7 +1822,7 @@
                 const tile = document.createElement('div');
                 tile.className = 'scraped-value-tile';
                 tile.title = `Exact Value: ${val.toLocaleString()} gp`;
-                
+
                 // Formatted string: e.g. 29.3k gp or 1.26M gp
                 let formattedVal = "";
                 if (val >= 1000000) {
@@ -1704,144 +1840,30 @@
                 container.appendChild(tile);
             });
 
-            // Update status message
-            const statusIndicator = document.getElementById('scrapeStatusIndicator');
-            const statusText = document.getElementById('scrapeStatusText');
-            if (statusIndicator && statusText) {
-                statusIndicator.classList.remove('status-pulse');
-                if (source === 'scraped') {
-                    statusIndicator.style.backgroundColor = '#4caf50';
-                    statusText.textContent = 'Live (scraped)';
-                } else {
-                    statusIndicator.style.backgroundColor = '#f44336';
-                    statusText.textContent = 'Offline (defaults)';
-                }
-            }
-        }
-
-        async function fetchWikiRewards() {
-            const targetUrl = 'https://oldschool.runescape.wiki/w/Rewards_Chest_(Fortis_Colosseum)';
-            let htmlText = '';
-            let success = false;
-
-            // 1. Try api.allorigins.win
-            try {
-                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.contents) {
-                        htmlText = data.contents;
-                        success = true;
-                    }
-                }
-            } catch (e) {
-                console.warn('api.allorigins.win failed:', e);
-            }
-
-            // 2. Try corsproxy.io as fallback
-            if (!success) {
-                try {
-                    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
-                    if (res.ok) {
-                        htmlText = await res.text();
-                        success = true;
-                    }
-                } catch (e) {
-                    console.warn('corsproxy.io fallback failed:', e);
-                }
-            }
-
-            if (success && htmlText) {
-                try {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlText, 'text/html');
-                    const parsedRewards = [];
-
-                    for (let w = 1; w <= 12; w++) {
-                        let val = null;
-
-                        // Fallback 1: Absolute XPath
-                        try {
-                            const xpathExpr = `/html/body/div[3]/div[3]/div[5]/div[1]/p[${w + 12}]/span`;
-                            const result = doc.evaluate(xpathExpr, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                            const node = result.singleNodeValue;
-                            if (node) {
-                                const parsedVal = parseFloat(node.textContent.trim().replace(/,/g, ''));
-                                if (!isNaN(parsedVal)) {
-                                    val = parsedVal;
-                                }
-                            }
-                        } catch (e) {
-                            console.warn(`Absolute XPath failed for Wave ${w}:`, e);
-                        }
-
-                        // Fallback 2: Relative XPath
-                        if (val === null) {
-                            try {
-                                const xpathFallback = `//p[contains(translate(normalize-space(.), ' ', ''), 'averagewave${w}rewardisworth')]//span`;
-                                const result = doc.evaluate(xpathFallback, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-                                const node = result.singleNodeValue;
-                                if (node) {
-                                    const parsedVal = parseFloat(node.textContent.trim().replace(/,/g, ''));
-                                    if (!isNaN(parsedVal)) {
-                                        val = parsedVal;
-                                    }
-                                }
-                            } catch (e) {
-                                console.warn(`Relative XPath fallback failed for Wave ${w}:`, e);
-                            }
-                        }
-
-                        // Fallback 3: Regex Search
-                        if (val === null) {
-                            const pattern = new RegExp(`wave\\s+${w}\\s+reward\\s+is\\s+worth\\s+<span[^>]*>([\\d,.]+)`, 'i');
-                            const match = htmlText.match(pattern);
-                            if (match) {
-                                const parsedVal = parseFloat(match[1].replace(/,/g, ''));
-                                if (!isNaN(parsedVal)) {
-                                    val = parsedVal;
-                                }
-                            }
-                        }
-
-                        if (val !== null) {
-                            parsedRewards.push(val);
-                        } else {
-                            // Fallback to hardcoded default
-                            parsedRewards.push(state.waveRewards[w - 1]);
-                        }
-                    }
-
-                    if (parsedRewards.length === 12) {
-                        state.waveRewards = parsedRewards;
-                        updateScrapedUI(state.waveRewards, 'scraped');
-                        updateCalculations();
-                        return;
-                    }
-                } catch (parseError) {
-                    console.error('Failed to parse scraped OSRS Wiki HTML:', parseError);
-                }
-            }
-
-            // Fallback UI rendering
-            updateScrapedUI(state.waveRewards, 'defaults');
-            updateCalculations();
+            // Status message is now statically updated by the python script
         }
 
         // Initialize
         initModifiers();
         renderModifiers();
-        updateScrapedUI(state.waveRewards, 'defaults');
+        updateScrapedUI(state.waveRewards);
         updateCalculations();
-        fetchWikiRewards();
+
 
         // Profit UI updating and quartile calculation
         function updateProfitUI(profitStatsList, totalSimRuns, waves) {
-            const keys = ['reset_red', 'reset_2_yellows', 'reset_any_yellow'];
+            const keys = [
+                'reset_red_claim', 'reset_red_sol',
+                'reset_2_yellows_claim', 'reset_2_yellows_sol',
+                'reset_any_yellow_claim', 'reset_any_yellow_sol'
+            ];
             const labels = {
-                'reset_red': 'Reset on Red Only',
-                'reset_2_yellows': 'Reset on 2nd Yellow',
-                'reset_any_yellow': 'Reset on 1st Yellow'
+                'reset_red_claim': 'Reset on Red (Claim W11)',
+                'reset_red_sol': 'Reset on Red (Attempt Sol)',
+                'reset_2_yellows_claim': 'Reset on 2nd Yellow (Claim W11)',
+                'reset_2_yellows_sol': 'Reset on 2nd Yellow (Attempt Sol)',
+                'reset_any_yellow_claim': 'Reset on 1st Yellow (Claim W11)',
+                'reset_any_yellow_sol': 'Reset on 1st Yellow (Attempt Sol)'
             };
 
             const aggregated = {};
@@ -1872,11 +1894,6 @@
             let bestStrategy = '';
             let maxProfit = -Infinity;
 
-            const tbody = document.getElementById('profitTableBody');
-            if (tbody) {
-                tbody.innerHTML = '';
-            }
-
             keys.forEach(k => {
                 const avgWave = aggregated[k].totalWaveReached / totalSimRuns;
                 const avgProfit = aggregated[k].totalProfit / totalSimRuns;
@@ -1898,29 +1915,61 @@
                     maxProfit = profitPerWave;
                     bestStrategy = k;
                 }
+            });
 
-                if (tbody) {
+            const tbody = document.getElementById('profitTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                keys.forEach(k => {
+                    const isBest = k === bestStrategy;
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid var(--border-color, #333)';
+                    if (isBest) {
+                        tr.style.backgroundColor = 'rgba(76, 175, 80, 0.08)';
+                    }
                     tr.innerHTML = `
-                        <td style="padding: 8px 4px; font-weight: 500;">${labels[k]}</td>
-                        <td style="padding: 8px 4px; text-align: right;">${avgWave.toFixed(2)}</td>
-                        <td style="padding: 8px 4px; text-align: right;">${formatGP(profitPerWave)}</td>
-                        <td style="padding: 8px 4px; text-align: right; font-weight: bold; color: ${avgProfit >= 0 ? '#4caf50' : '#f44336'};">${formatGP(avgProfit)}</td>
+                        <td style="padding: 8px 4px; font-weight: ${isBest ? 'bold' : '500'}; color: ${isBest ? '#4caf50' : 'inherit'};">
+                            ${labels[k]} ${isBest ? ' ★' : ''}
+                        </td>
+                        <td style="padding: 8px 4px; text-align: right;">${results[k].avgWave.toFixed(2)}</td>
+                        <td style="padding: 8px 4px; text-align: right; font-weight: ${isBest ? 'bold' : 'normal'}; color: ${isBest ? '#4caf50' : 'inherit'};">${formatGP(results[k].profitPerWave)}</td>
+                        <td style="padding: 8px 4px; text-align: right; font-weight: bold; color: ${results[k].avgProfit >= 0 ? '#4caf50' : '#f44336'};">${formatGP(results[k].avgProfit)}</td>
                     `;
                     tbody.appendChild(tr);
-                }
-            });
+                });
+            }
+
+            // Compare Sol vs Claim for the best base strategy
+            const bestBase = bestStrategy.replace('_claim', '').replace('_sol', '');
+            const solKey = bestBase + '_sol';
+            const claimKey = bestBase + '_claim';
+
+            const solProfit = results[solKey].profitPerWave;
+            const claimProfit = results[claimKey].profitPerWave;
+            const shouldKillSol = solProfit > claimProfit;
+            const difference = Math.abs(solProfit - claimProfit);
 
             const recBox = document.getElementById('strategyRecommendation');
             if (recBox) {
                 let recColor = '#4caf50';
+                let baseLabel = bestBase === 'reset_red' ? 'Reset on Red Only' :
+                    bestBase === 'reset_2_yellows' ? 'Reset on 2nd Yellow' : 'Reset on 1st Yellow';
+
                 let recHtml = `
                     <div style="font-size: 15px; font-weight: 600; color: ${recColor}; margin-bottom: 8px;">
                         Recommended Strategy: ${labels[bestStrategy]}
                     </div>
-                    <div style="font-size: 13px; color: var(--text-secondary, #999); line-height: 1.4;">
-                        Based on your death risks and settings, resetting on <strong>${labels[bestStrategy].toLowerCase()}</strong> yields the highest expected profit of <strong>${formatGP(results[bestStrategy].profitPerWave)}</strong> per wave (with an average total profit of <strong>${formatGP(results[bestStrategy].avgProfit)}</strong> per run).
+                    <div style="font-size: 13px; color: var(--text-secondary, #999); line-height: 1.4; margin-bottom: 12px;">
+                        Based on your death risks and settings, resetting on <strong>${baseLabel.toLowerCase()}</strong> yields the highest expected profit.
+                    </div>
+                    <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; font-size: 13px; border-left: 4px solid ${shouldKillSol ? '#4caf50' : '#f44336'}; line-height: 1.5;">
+                        <strong style="color: #fff; display: block; margin-bottom: 4px;">Sol Heredit Decision:</strong>
+                        Under your optimal strategy, you should <strong>${shouldKillSol ? 'ATTEMPT' : 'SKIP & CLAIM BEFORE'}</strong> Sol Heredit.<br>
+                        Attempting Sol: <strong style="color: ${shouldKillSol ? '#4caf50' : '#999'};">${formatGP(solProfit)}/wave</strong><br>
+                        Claiming W11: <strong style="color: ${!shouldKillSol ? '#4caf50' : '#999'};">${formatGP(claimProfit)}/wave</strong><br>
+                        <span style="font-size: 11px; color: var(--text-secondary, #999); display: block; margin-top: 4px;">
+                            ${shouldKillSol ? 'Attempting Sol raises' : 'Claiming before Sol raises'} your expected per-wave profit by <strong>${formatGP(difference)}</strong>.
+                        </span>
                     </div>
                 `;
                 recBox.innerHTML = recHtml;
